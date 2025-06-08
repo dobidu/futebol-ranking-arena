@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,9 @@ import Rankings from "./pages/Rankings";
 import Players from "./pages/Players";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminSeasons from "./pages/admin/AdminSeasons";
+import AdminPlayers from "./pages/admin/AdminPlayers";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +42,14 @@ const App = () => {
               <Route path="/rankings" element={<Rankings />} />
               <Route path="/jogadores" element={<Players />} />
               <Route path="/relatorios" element={<Reports />} />
-              {/* Rotas administrativas serão adicionadas em breve */}
+              {/* Rotas administrativas */}
+              {isAdmin && (
+                <>
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/temporadas" element={<AdminSeasons />} />
+                  <Route path="/admin/jogadores" element={<AdminPlayers />} />
+                </>
+              )}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
