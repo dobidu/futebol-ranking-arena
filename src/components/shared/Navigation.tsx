@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Trophy, Users, BarChart3, Settings, LogIn } from 'lucide-react';
+import { Home, Trophy, Users, BarChart3, Settings, LogIn, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NavigationProps {
@@ -17,6 +17,7 @@ const Navigation: React.FC<NavigationProps> = ({ isAdmin = false, onLogin, onLog
     { path: '/', label: 'Início', icon: Home },
     { path: '/rankings', label: 'Rankings', icon: Trophy },
     { path: '/jogadores', label: 'Jogadores', icon: Users },
+    { path: '/temporadas', label: 'Temporadas', icon: Calendar },
     { path: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   ];
 
@@ -34,7 +35,7 @@ const Navigation: React.FC<NavigationProps> = ({ isAdmin = false, onLogin, onLog
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Trophy className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">Ranking Futebol</span>
+              <span className="text-xl font-bold text-foreground">Ranking Pelada Bravo</span>
             </Link>
           </div>
 
