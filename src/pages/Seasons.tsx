@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Trophy, Users, PlayCircle } from 'lucide-react';
+import { Calendar, Trophy, Users, PlayCircle, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { temporadaService, peladaService } from '@/services/dataService';
 
@@ -47,7 +47,7 @@ const Seasons: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1 text-sm text-muted-foreground mb-1">
@@ -60,21 +60,54 @@ const Seasons: React.FC = () => {
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1 text-sm text-muted-foreground mb-1">
                         <Users className="h-4 w-4" />
-                        <span>Vitória</span>
+                        <span>Descartes</span>
                       </div>
-                      <div className="text-lg font-bold text-foreground">{temporada.pontosVitoria}pts</div>
+                      <div className="text-lg font-bold text-foreground">{temporada.numeroDescartes}</div>
                     </div>
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Empate:</span>
-                        <span className="ml-2 font-medium">{temporada.pontosEmpate}pts</span>
+                  {/* Pontuação por Resultado */}
+                  <div className="border-t border-border pt-4">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Pontuação por Resultado</h4>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div className="text-center">
+                        <span className="text-green-600 font-medium">V: {temporada.pontosVitoria}</span>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Derrota:</span>
-                        <span className="ml-2 font-medium">{temporada.pontosDerrota}pts</span>
+                      <div className="text-center">
+                        <span className="text-yellow-600 font-medium">E: {temporada.pontosEmpate}</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-red-600 font-medium">D: {temporada.pontosDerrota}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Penalidades */}
+                  <div className="border-t border-border pt-4">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center space-x-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>Penalidades</span>
+                    </h4>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span>Atraso Tipo 1:</span>
+                        <span className="font-medium">{temporada.penalidadeAtraso1}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Atraso Tipo 2:</span>
+                        <span className="font-medium">{temporada.penalidadeAtraso2}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cartão Amarelo:</span>
+                        <span className="font-medium">{temporada.penalidadeCartaoAmarelo}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cartão Azul:</span>
+                        <span className="font-medium">{temporada.penalidadeCartaoAzul}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cartão Vermelho:</span>
+                        <span className="font-medium">{temporada.penalidadeCartaoVermelho}</span>
                       </div>
                     </div>
                   </div>
