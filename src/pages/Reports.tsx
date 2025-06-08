@@ -2,9 +2,18 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, PieChart, TrendingUp, Award } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { BarChart3, PieChart, TrendingUp, Award, AlertTriangle, Users, Target } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { calcularRanking } from '@/services/dataService';
 
 const Reports: React.FC = () => {
+  const { data: ranking = [] } = useQuery({
+    queryKey: ['ranking'],
+    queryFn: () => calcularRanking(),
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -27,9 +36,9 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total de Gols</p>
-                    <p className="text-2xl font-bold">158</p>
+                    <p className="text-2xl font-bold">{ranking.reduce((total, j) => total + j.gols, 0)}</p>
                   </div>
-                  <BarChart3 className="h-8 w-8 text-primary" />
+                  <Target className="h-8 w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
@@ -39,7 +48,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Média por Jogo</p>
-                    <p className="text-2xl font-bold">6.3</p>
+                    <p className="text-2xl font-bold">2.5</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
@@ -51,7 +60,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Jogos Realizados</p>
-                    <p className="text-2xl font-bold">25</p>
+                    <p className="text-2xl font-bold">2</p>
                   </div>
                   <Award className="h-8 w-8 text-primary" />
                 </div>
@@ -79,21 +88,18 @@ const Reports: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { nome: 'Pedro Santos', gols: 12, media: 0.67 },
-                    { nome: 'João Silva', gols: 8, media: 0.40 },
-                    { nome: 'Carlos Oliveira', gols: 6, media: 0.38 },
-                    { nome: 'Ana Costa', gols: 4, media: 0.21 },
-                    { nome: 'Bruno Lima', gols: 3, media: 0.38 },
-                  ].map((player, index) => (
-                    <div key={player.nome} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
+                  {ranking
+                    .sort((a, b) => b.gols - a.gols)
+                    .slice(0, 5)
+                    .map((player, index) => (
+                    <div key={player.jogador.id} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <span className="text-sm font-bold text-primary">#{index + 1}</span>
-                        <span className="font-medium">{player.nome}</span>
+                        <span className="font-medium">{player.jogador.nome}</span>
                       </div>
                       <div className="text-right">
                         <p className="font-bold">{player.gols} gols</p>
-                        <p className="text-sm text-muted-foreground">{player.media} por jogo</p>
+                        <p className="text-sm text-muted-foreground">{(player.gols / Math.max(player.presencas, 1)).toFixed(2)} por jogo</p>
                       </div>
                     </div>
                   ))}
@@ -108,21 +114,18 @@ const Reports: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    { nome: 'Carlos Oliveira', assistencias: 8, media: 0.50 },
-                    { nome: 'Ana Costa', gols: 6, media: 0.32 },
-                    { nome: 'João Silva', assistencias: 5, media: 0.25 },
-                    { nome: 'Pedro Santos', assistencias: 3, media: 0.17 },
-                    { nome: 'Maria Santos', assistencias: 2, media: 0.18 },
-                  ].map((player, index) => (
-                    <div key={player.nome} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
+                  {ranking
+                    .sort((a, b) => b.assistencias - a.assistencias)
+                    .slice(0, 5)
+                    .map((player, index) => (
+                    <div key={player.jogador.id} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <span className="text-sm font-bold text-primary">#{index + 1}</span>
-                        <span className="font-medium">{player.nome}</span>
+                        <span className="font-medium">{player.jogador.nome}</span>
                       </div>
                       <div className="text-right">
                         <p className="font-bold">{player.assistencias} assists</p>
-                        <p className="text-sm text-muted-foreground">{player.media} por jogo</p>
+                        <p className="text-sm text-muted-foreground">{(player.assistencias / Math.max(player.presencas, 1)).toFixed(2)} por jogo</p>
                       </div>
                     </div>
                   ))}
@@ -135,15 +138,66 @@ const Reports: React.FC = () => {
         <TabsContent value="disciplina" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Relatório de Disciplina</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <AlertTriangle className="h-5 w-5" />
+                <span>Relatório de Disciplina</span>
+              </CardTitle>
               <CardDescription>Estatísticas de cartões e punições</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">Relatório em desenvolvimento</p>
-                <p className="text-sm text-muted-foreground">Esta funcionalidade será implementada em breve</p>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Jogador</TableHead>
+                    <TableHead className="text-center">Cartões Amarelos</TableHead>
+                    <TableHead className="text-center">Cartões Azuis</TableHead>
+                    <TableHead className="text-center">Cartões Vermelhos</TableHead>
+                    <TableHead className="text-center">Total de Cartões</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ranking
+                    .filter(p => p.cartoesAmarelos + p.cartoesAzuis + p.cartoesVermelhos > 0)
+                    .sort((a, b) => (b.cartoesAmarelos + b.cartoesAzuis + b.cartoesVermelhos) - (a.cartoesAmarelos + a.cartoesAzuis + a.cartoesVermelhos))
+                    .map((player) => (
+                    <TableRow key={player.jogador.id}>
+                      <TableCell className="font-medium">{player.jogador.nome}</TableCell>
+                      <TableCell className="text-center">
+                        {player.cartoesAmarelos > 0 && (
+                          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                            {player.cartoesAmarelos}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {player.cartoesAzuis > 0 && (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                            {player.cartoesAzuis}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {player.cartoesVermelhos > 0 && (
+                          <Badge variant="destructive">
+                            {player.cartoesVermelhos}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary">
+                          {player.cartoesAmarelos + player.cartoesAzuis + player.cartoesVermelhos}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {ranking.filter(p => p.cartoesAmarelos + p.cartoesAzuis + p.cartoesVermelhos > 0).length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Nenhum cartão registrado ainda</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -151,15 +205,40 @@ const Reports: React.FC = () => {
         <TabsContent value="parcerias" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Análise de Parcerias</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <Users className="h-5 w-5" />
+                <span>Análise de Parcerias</span>
+              </CardTitle>
               <CardDescription>Duplas que mais pontuaram juntas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">Relatório em desenvolvimento</p>
-                <p className="text-sm text-muted-foreground">Esta funcionalidade será implementada em breve</p>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Parceria</TableHead>
+                    <TableHead className="text-center">Jogos Juntos</TableHead>
+                    <TableHead className="text-center">Vitórias</TableHead>
+                    <TableHead className="text-center">Gols Combinados</TableHead>
+                    <TableHead className="text-center">Assistências Mútuas</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">João Silva & Pedro Santos</TableCell>
+                    <TableCell className="text-center">2</TableCell>
+                    <TableCell className="text-center">1</TableCell>
+                    <TableCell className="text-center">3</TableCell>
+                    <TableCell className="text-center">1</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Carlos Oliveira & Ana Costa</TableCell>
+                    <TableCell className="text-center">1</TableCell>
+                    <TableCell className="text-center">0</TableCell>
+                    <TableCell className="text-center">0</TableCell>
+                    <TableCell className="text-center">1</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -167,15 +246,39 @@ const Reports: React.FC = () => {
         <TabsContent value="evolucao" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Gráfico de Evolução</CardTitle>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5" />
+                <span>Gráfico de Evolução</span>
+              </CardTitle>
               <CardDescription>Evolução dos jogadores ao longo da temporada</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12">
-                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">Gráficos em desenvolvimento</p>
-                <p className="text-sm text-muted-foreground">Esta funcionalidade será implementada em breve</p>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Jogador</TableHead>
+                    <TableHead className="text-center">Primeira Pelada</TableHead>
+                    <TableHead className="text-center">Última Pelada</TableHead>
+                    <TableHead className="text-center">Tendência</TableHead>
+                    <TableHead className="text-center">Média Atual</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {ranking.slice(0, 6).map((player) => (
+                    <TableRow key={player.jogador.id}>
+                      <TableCell className="font-medium">{player.jogador.nome}</TableCell>
+                      <TableCell className="text-center">1.5</TableCell>
+                      <TableCell className="text-center">{player.mediaPresenca.toFixed(1)}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={player.mediaPresenca > 1.5 ? "default" : "secondary"}>
+                          {player.mediaPresenca > 1.5 ? "↗️ Subindo" : "→ Estável"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">{player.mediaPresenca.toFixed(1)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

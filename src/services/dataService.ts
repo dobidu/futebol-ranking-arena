@@ -1,4 +1,3 @@
-
 import { Temporada, Jogador, Pelada, TimeNaPelada, Partida, RegistroPeladaJogador, Evento, RankingJogador } from '@/types';
 
 // Simulação de dados armazenados em arquivos JSON
@@ -41,14 +40,166 @@ let jogadores: Jogador[] = [
     tipo: 'Convidado',
     ativo: true,
     criadoEm: new Date('2024-01-01')
+  },
+  {
+    id: '4',
+    nome: 'Ana Costa',
+    tipo: 'Mensalista',
+    ativo: true,
+    criadoEm: new Date('2024-01-01')
+  },
+  {
+    id: '5',
+    nome: 'Bruno Lima',
+    tipo: 'Mensalista',
+    ativo: true,
+    criadoEm: new Date('2024-01-01')
+  },
+  {
+    id: '6',
+    nome: 'Maria Santos',
+    tipo: 'Convidado',
+    ativo: true,
+    criadoEm: new Date('2024-01-01')
   }
 ];
 
-let peladas: Pelada[] = [];
-let timesNaPelada: TimeNaPelada[] = [];
-let partidas: Partida[] = [];
-let registrosPeladaJogador: RegistroPeladaJogador[] = [];
-let eventos: Evento[] = [];
+let peladas: Pelada[] = [
+  {
+    id: '1',
+    data: new Date('2024-06-01'),
+    temporadaId: '1'
+  },
+  {
+    id: '2',
+    data: new Date('2024-06-08'),
+    temporadaId: '1'
+  },
+  {
+    id: '3',
+    data: new Date('2024-06-15'),
+    temporadaId: '1'
+  }
+];
+
+let timesNaPelada: TimeNaPelada[] = [
+  {
+    id: '1',
+    peladaId: '1',
+    identificadorLetra: 'A',
+    jogadores: ['1', '2', '3']
+  },
+  {
+    id: '2',
+    peladaId: '1',
+    identificadorLetra: 'B',
+    jogadores: ['4', '5', '6']
+  },
+  {
+    id: '3',
+    peladaId: '2',
+    identificadorLetra: 'A',
+    jogadores: ['1', '3', '5']
+  },
+  {
+    id: '4',
+    peladaId: '2',
+    identificadorLetra: 'B',
+    jogadores: ['2', '4', '6']
+  }
+];
+
+let partidas: Partida[] = [
+  {
+    id: '1',
+    peladaId: '1',
+    timeAId: '1',
+    timeBId: '2',
+    placarA: 3,
+    placarB: 2
+  },
+  {
+    id: '2',
+    peladaId: '2',
+    timeAId: '3',
+    timeBId: '4',
+    placarA: 1,
+    placarB: 1
+  }
+];
+
+let registrosPeladaJogador: RegistroPeladaJogador[] = [
+  {
+    id: '1',
+    peladaId: '1',
+    jogadorId: '1',
+    statusPresenca: 'Presente',
+    pontuacaoBruta: 3
+  },
+  {
+    id: '2',
+    peladaId: '1',
+    jogadorId: '2',
+    statusPresenca: 'Presente',
+    pontuacaoBruta: 3
+  },
+  {
+    id: '3',
+    peladaId: '1',
+    jogadorId: '3',
+    statusPresenca: 'Presente',
+    pontuacaoBruta: 3
+  },
+  {
+    id: '4',
+    peladaId: '1',
+    jogadorId: '4',
+    statusPresenca: 'Presente',
+    pontuacaoBruta: 0
+  },
+  {
+    id: '5',
+    peladaId: '1',
+    jogadorId: '5',
+    statusPresenca: 'Presente',
+    pontuacaoBruta: 0
+  },
+  {
+    id: '6',
+    peladaId: '1',
+    jogadorId: '6',
+    statusPresenca: 'Presente',
+    pontuacaoBruta: 0
+  }
+];
+
+let eventos: Evento[] = [
+  {
+    id: '1',
+    partidaId: '1',
+    tipo: 'Gol',
+    jogadorId: '1',
+    jogadorAssistenciaId: '2'
+  },
+  {
+    id: '2',
+    partidaId: '1',
+    tipo: 'Gol',
+    jogadorId: '2'
+  },
+  {
+    id: '3',
+    partidaId: '1',
+    tipo: 'Assistência',
+    jogadorId: '3'
+  },
+  {
+    id: '4',
+    partidaId: '1',
+    tipo: 'Cartão Amarelo',
+    jogadorId: '4'
+  }
+];
 
 // Funções auxiliares para simular persistência
 const saveToLocalStorage = (key: string, data: any) => {

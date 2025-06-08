@@ -35,7 +35,7 @@ const Navigation: React.FC<NavigationProps> = ({ isAdmin = false, onLogin, onLog
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
               <Trophy className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-foreground">Ranking Pelada Bravo</span>
+              <span className="text-xl font-bold text-foreground">Pelada Bravo</span>
             </Link>
           </div>
 
