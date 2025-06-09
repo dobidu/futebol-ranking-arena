@@ -1,24 +1,83 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart3, PieChart, TrendingUp, Award, AlertTriangle, Users, Target } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { calcularRanking } from '@/services/dataService';
+import { calcularRanking, temporadaService, peladaService } from '@/services/dataService';
 
 const Reports: React.FC = () => {
-  const { data: ranking = [] } = useQuery({
-    queryKey: ['ranking'],
-    queryFn: () => calcularRanking(),
+  const [selectedTemporada, setSelectedTemporada] = useState<string>('');
+
+  const { data: temporadas = [] } = useQuery({
+    queryKey: ['temporadas'],
+    queryFn: temporadaService.getAll,
   });
+
+  const { data: peladas = [] } = useQuery({
+    queryKey: ['peladas'],
+    queryFn: peladaService.getAll,
+  });
+
+  // Definir temporada padrão (ativa) se não tiver selecionada
+  React.useEffect(() => {
+    if (temporadas.length > 0 && !selectedTemporada) {
+      const temporadaAtiva = temporadas.find(t => t.ativa);
+      setSelectedTemporada(temporadaAtiva?.id || temporadas[0].id);
+    }
+  }, [temporadas, selectedTemporada]);
+
+  const { data: ranking = [] } = useQuery({
+    queryKey: ['ranking-reports', selectedTemporada],
+    queryFn: () => {
+      if (!selectedTemporada) return [];
+      return calcularRanking(selectedTemporada === 'all' ? undefined : selectedTemporada);
+    },
+    enabled: !!selectedTemporada,
+  });
+
+  // Filtrar peladas da temporada selecionada
+  const peladasFiltradas = selectedTemporada && selectedTemporada !== 'all' 
+    ? peladas.filter(p => p.temporadaId === selectedTemporada)
+    : peladas;
+
+  // Calcular estatísticas dinâmicas
+  const totalGols = ranking.reduce((total, j) => total + j.gols, 0);
+  const totalPartidas = peladasFiltradas.reduce((total, pelada) => total + pelada.partidas.length, 0);
+  const mediaGolsPorJogo = totalPartidas > 0 ? (totalGols / totalPartidas).toFixed(1) : '0.0';
+  const totalJogadores = ranking.length;
+  const presencaMedia = ranking.length > 0 
+    ? (ranking.reduce((total, j) => total + j.presencas, 0) / ranking.length / peladasFiltradas.length * 100).toFixed(0)
+    : '0';
+
+  console.log('Reports - Temporada selecionada:', selectedTemporada);
+  console.log('Reports - Ranking:', ranking);
+  console.log('Reports - Peladas filtradas:', peladasFiltradas);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Relatórios e Estatísticas</h1>
-        <p className="text-muted-foreground">Análises detalhadas do campeonato</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Relatórios e Estatísticas</h1>
+          <p className="text-muted-foreground">Análises detalhadas do campeonato</p>
+        </div>
+        
+        <Select value={selectedTemporada} onValueChange={setSelectedTemporada}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Selecione a temporada" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as Temporadas</SelectItem>
+            {temporadas.filter(t => t.id && t.nome).map((temporada) => (
+              <SelectItem key={temporada.id} value={temporada.id}>
+                {temporada.nome} {temporada.ativa && '(Ativa)'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Tabs defaultValue="geral" className="space-y-6">
@@ -36,7 +95,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total de Gols</p>
-                    <p className="text-2xl font-bold">{ranking.reduce((total, j) => total + j.gols, 0)}</p>
+                    <p className="text-2xl font-bold">{totalGols}</p>
                   </div>
                   <Target className="h-8 w-8 text-primary" />
                 </div>
@@ -48,7 +107,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Média por Jogo</p>
-                    <p className="text-2xl font-bold">2.5</p>
+                    <p className="text-2xl font-bold">{mediaGolsPorJogo}</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
@@ -60,7 +119,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Jogos Realizados</p>
-                    <p className="text-2xl font-bold">2</p>
+                    <p className="text-2xl font-bold">{peladasFiltradas.length}</p>
                   </div>
                   <Award className="h-8 w-8 text-primary" />
                 </div>
@@ -72,7 +131,7 @@ const Reports: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Participação Média</p>
-                    <p className="text-2xl font-bold">83%</p>
+                    <p className="text-2xl font-bold">{presencaMedia}%</p>
                   </div>
                   <PieChart className="h-8 w-8 text-primary" />
                 </div>
@@ -104,6 +163,11 @@ const Reports: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {ranking.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">Nenhum dado disponível</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -130,6 +194,11 @@ const Reports: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {ranking.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">Nenhum dado disponível</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

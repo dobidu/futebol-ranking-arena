@@ -9,17 +9,32 @@ import { temporadaService, calcularRanking } from '@/services/dataService';
 import { RankingJogador } from '@/types';
 
 const Rankings: React.FC = () => {
-  const [selectedTemporada, setSelectedTemporada] = useState<string>('all');
+  const [selectedTemporada, setSelectedTemporada] = useState<string>('');
 
   const { data: temporadas = [] } = useQuery({
     queryKey: ['temporadas'],
     queryFn: temporadaService.getAll,
   });
 
+  // Definir temporada padrão (ativa) se não tiver selecionada
+  React.useEffect(() => {
+    if (temporadas.length > 0 && !selectedTemporada) {
+      const temporadaAtiva = temporadas.find(t => t.ativa);
+      setSelectedTemporada(temporadaAtiva?.id || temporadas[0].id);
+    }
+  }, [temporadas, selectedTemporada]);
+
   const { data: rankingData = [] } = useQuery({
     queryKey: ['ranking', selectedTemporada],
-    queryFn: () => calcularRanking(selectedTemporada === 'all' ? undefined : selectedTemporada),
+    queryFn: () => {
+      if (!selectedTemporada) return [];
+      return calcularRanking(selectedTemporada === 'all' ? undefined : selectedTemporada);
+    },
+    enabled: !!selectedTemporada,
   });
+
+  console.log('Rankings - Temporada selecionada:', selectedTemporada);
+  console.log('Rankings - Dados do ranking:', rankingData);
 
   const artilheiroData = [...rankingData].sort((a, b) => b.gols - a.gols);
   const assistenciaData = [...rankingData].sort((a, b) => b.assistencias - a.assistencias);
@@ -109,12 +124,21 @@ const Rankings: React.FC = () => {
             <SelectItem value="all">Todas as Temporadas</SelectItem>
             {temporadas.filter(t => t.id && t.nome).map((temporada) => (
               <SelectItem key={temporada.id} value={temporada.id}>
-                {temporada.nome}
+                {temporada.nome} {temporada.ativa && '(Ativa)'}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+
+      {/* Indicador de dados carregados */}
+      {rankingData.length === 0 && selectedTemporada && (
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-muted-foreground">Nenhum dado encontrado para esta temporada</p>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="geral" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
