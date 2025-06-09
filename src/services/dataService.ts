@@ -1,3 +1,4 @@
+
 import { Jogador, Pelada, Partida, Evento, Temporada, RankingJogador } from '@/types';
 
 // Funções para acessar o Local Storage
@@ -12,18 +13,18 @@ const storage = {
 };
 
 // Serviços para cada tipo de dado
-const createService = <T>(key: string) => ({
+const createService = <T extends { id: string }>(key: string) => ({
   getAll: (): T[] => storage.get(key) || [],
   getById: (id: string): T | undefined => {
     const items: T[] = storage.get(key) || [];
     return items.find((item: any) => item.id === id);
   },
-  create: (item: T & { id?: string }): void => {
+  create: (item: Omit<T, 'id'> & { id?: string }): void => {
     const items: T[] = storage.get(key) || [];
-    const newItem = { ...item, id: item.id || crypto.randomUUID() };
+    const newItem = { ...item, id: item.id || crypto.randomUUID() } as T;
     storage.set(key, [...items, newItem]);
   },
-  update: (id: string, updatedItem: T): void => {
+  update: (id: string, updatedItem: Partial<T>): void => {
     const items: T[] = storage.get(key) || [];
     const updatedItems = items.map((item: any) => (item.id === id ? { ...item, ...updatedItem } : item));
     storage.set(key, updatedItems);
