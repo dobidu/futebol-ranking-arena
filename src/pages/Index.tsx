@@ -4,16 +4,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, BarChart3, Target, Calendar, Award } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { temporadaService, peladaService, jogadorService, calcularRanking } from '@/services/dataService';
 
 const Index: React.FC = () => {
-  const stats = {
-    totalJogadores: 25,
-    jogosSemana: 4,
-    golsTemporada: 158,
-    liderRanking: 'João Silva',
-    artilheiro: 'Pedro Santos',
-    assistente: 'Carlos Oliveira',
-  };
+  const { data: temporadas = [] } = useQuery({
+    queryKey: ['temporadas'],
+    queryFn: temporadaService.getAll,
+  });
+
+  const { data: peladas = [] } = useQuery({
+    queryKey: ['peladas'],
+    queryFn: peladaService.getAll,
+  });
+
+  const { data: jogadores = [] } = useQuery({
+    queryKey: ['jogadores'],
+    queryFn: jogadorService.getAll,
+  });
+
+  const temporadaAtiva = temporadas.find(t => t.ativa);
+  
+  const { data: ranking = [] } = useQuery({
+    queryKey: ['ranking-geral'],
+    queryFn: () => calcularRanking(),
+  });
+
+  // Calcular estatísticas dinâmicas
+  const jogadoresAtivos = jogadores.filter(j => j.ativo).length;
+  const ultimaPelada = peladas.length > 0 ? peladas[peladas.length - 1] : null;
+  const totalGols = ranking.reduce((total, jogador) => total + jogador.gols, 0);
+  
+  const liderRanking = ranking.length > 0 ? ranking[0] : null;
+  const artilheiro = ranking.length > 0 ? [...ranking].sort((a, b) => b.gols - a.gols)[0] : null;
+  const assistente = ranking.length > 0 ? [...ranking].sort((a, b) => b.assistencias - a.assistencias)[0] : null;
 
   const quickActions = [
     {
@@ -43,7 +67,7 @@ const Index: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-foreground">Ranking de Futebol</h1>
+        <h1 className="text-4xl font-bold text-foreground">Pelada Bravo</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Sistema completo de gestão e acompanhamento do campeonato amador. 
           Acompanhe rankings, estatísticas e evolução dos jogadores.
@@ -56,7 +80,7 @@ const Index: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Users className="h-8 w-8 text-primary" />
-              <span className="text-3xl font-bold">{stats.totalJogadores}</span>
+              <span className="text-3xl font-bold">{jogadoresAtivos}</span>
             </div>
             <p className="text-muted-foreground">Jogadores Ativos</p>
           </CardContent>
@@ -66,9 +90,9 @@ const Index: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Calendar className="h-8 w-8 text-primary" />
-              <span className="text-3xl font-bold">{stats.jogosSemana}</span>
+              <span className="text-3xl font-bold">{peladas.length}</span>
             </div>
-            <p className="text-muted-foreground">Jogos por Semana</p>
+            <p className="text-muted-foreground">Total de Peladas</p>
           </CardContent>
         </Card>
         
@@ -76,12 +100,38 @@ const Index: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Target className="h-8 w-8 text-primary" />
-              <span className="text-3xl font-bold">{stats.golsTemporada}</span>
+              <span className="text-3xl font-bold">{totalGols}</span>
             </div>
             <p className="text-muted-foreground">Gols na Temporada</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Última Pelada */}
+      {ultimaPelada && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5" />
+              <span>Última Pelada</span>
+            </CardTitle>
+            <CardDescription>Pelada mais recente cadastrada</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="font-medium">{new Date(ultimaPelada.data).toLocaleDateString('pt-BR')}</p>
+                <p className="text-sm text-muted-foreground">
+                  Temporada: {temporadas.find(t => t.id === ultimaPelada.temporadaId)?.nome || 'N/A'}
+                </p>
+              </div>
+              <Link to={`/pelada/${ultimaPelada.id}`}>
+                <Button variant="outline">Ver Detalhes</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Destaques da temporada */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -92,8 +142,12 @@ const Index: React.FC = () => {
             <CardDescription>Primeiro colocado na classificação geral</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.liderRanking}</p>
-            <p className="text-sm text-muted-foreground">450 pontos</p>
+            <p className="text-2xl font-bold text-foreground">
+              {liderRanking ? liderRanking.jogador.nome : 'N/A'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {liderRanking ? `${liderRanking.pontuacaoTotal} pontos` : 'Sem dados'}
+            </p>
           </CardContent>
         </Card>
         
@@ -104,8 +158,12 @@ const Index: React.FC = () => {
             <CardDescription>Maior goleador da temporada</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.artilheiro}</p>
-            <p className="text-sm text-muted-foreground">12 gols</p>
+            <p className="text-2xl font-bold text-foreground">
+              {artilheiro ? artilheiro.jogador.nome : 'N/A'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {artilheiro ? `${artilheiro.gols} gols` : 'Sem dados'}
+            </p>
           </CardContent>
         </Card>
         
@@ -116,11 +174,58 @@ const Index: React.FC = () => {
             <CardDescription>Quem mais deu assistências</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.assistente}</p>
-            <p className="text-sm text-muted-foreground">8 assistências</p>
+            <p className="text-2xl font-bold text-foreground">
+              {assistente ? assistente.jogador.nome : 'N/A'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {assistente ? `${assistente.assistencias} assistências` : 'Sem dados'}
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Temporada Atual */}
+      {temporadaAtiva && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Trophy className="h-5 w-5" />
+              <span>Temporada Atual</span>
+            </CardTitle>
+            <CardDescription>Informações da temporada ativa</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-semibold mb-2">{temporadaAtiva.nome}</h3>
+                <p className="text-sm text-muted-foreground">
+                  Peladas realizadas: {peladas.filter(p => p.temporadaId === temporadaAtiva.id).length}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Descartes permitidos: {temporadaAtiva.numeroDescartes}
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Pontuação:</h4>
+                <div className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span>Vitória:</span>
+                    <span>{temporadaAtiva.pontosVitoria} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Empate:</span>
+                    <span>{temporadaAtiva.pontosEmpate} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Derrota:</span>
+                    <span>{temporadaAtiva.pontosDerrota} pts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Ações rápidas */}
       <Card>
