@@ -8,28 +8,41 @@ import { useQuery } from '@tanstack/react-query';
 import { temporadaService, jogadorService, peladaService, calcularRanking } from '@/services/dataService';
 
 const AdminDashboard: React.FC = () => {
-  const { data: temporadas = [] } = useQuery({
+  const { data: temporadas = [], refetch: refetchTemporadas } = useQuery({
     queryKey: ['temporadas'],
     queryFn: temporadaService.getAll,
   });
 
-  const { data: jogadores = [] } = useQuery({
+  const { data: jogadores = [], refetch: refetchJogadores } = useQuery({
     queryKey: ['jogadores'],
     queryFn: jogadorService.getAll,
   });
 
-  const { data: peladas = [] } = useQuery({
+  const { data: peladas = [], refetch: refetchPeladas } = useQuery({
     queryKey: ['peladas'],
     queryFn: peladaService.getAll,
   });
 
-  const { data: ranking = [] } = useQuery({
-    queryKey: ['ranking'],
-    queryFn: () => calcularRanking(),
+  const temporadaAtiva = temporadas.find(t => t.ativa);
+
+  const { data: ranking = [], refetch: refetchRanking } = useQuery({
+    queryKey: ['ranking-admin', temporadaAtiva?.id],
+    queryFn: () => temporadaAtiva ? calcularRanking(temporadaAtiva.id) : [],
+    enabled: !!temporadaAtiva,
   });
 
-  const temporadaAtiva = temporadas.find(t => t.ativa);
-  const peladasTemporadaAtiva = peladas.filter(p => p.temporadaId === temporadaAtiva?.id);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      refetchTemporadas();
+      refetchJogadores();
+      refetchPeladas();
+      refetchRanking();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [refetchTemporadas, refetchJogadores, refetchPeladas, refetchRanking]);
+
+  const peladasTemporadaAtiva = temporadaAtiva ? peladas.filter(p => p.temporadaId === temporadaAtiva.id) : [];
   const jogadoresAtivos = jogadores.filter(j => j.ativo);
   const jogadoresMensalistas = jogadores.filter(j => j.tipo === 'Mensalista' && j.ativo);
   const jogadoresConvidados = jogadores.filter(j => j.tipo === 'Convidado' && j.ativo);
@@ -37,8 +50,8 @@ const AdminDashboard: React.FC = () => {
   // Calcular estatísticas baseadas nos dados reais
   const totalGols = ranking.reduce((acc, r) => acc + r.gols, 0);
   const totalCartoes = ranking.reduce((acc, r) => acc + r.cartoesAmarelos + r.cartoesAzuis + r.cartoesVermelhos, 0);
-  const artilheiro = ranking.sort((a, b) => b.gols - a.gols)[0];
-  const liderRanking = ranking[0];
+  const artilheiro = ranking.length > 0 ? [...ranking].sort((a, b) => b.gols - a.gols)[0] : null;
+  const liderRanking = ranking.length > 0 ? ranking[0] : null;
 
   const estatisticasGerais = [
     {
@@ -112,30 +125,36 @@ const AdminDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Jogador</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Pontos</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ranking.slice(0, 5).map((item) => (
-                  <TableRow key={item.jogador.id}>
-                    <TableCell className="font-medium">{item.posicao}</TableCell>
-                    <TableCell>{item.jogador.nome}</TableCell>
-                    <TableCell>
-                      <Badge variant={item.jogador.tipo === 'Mensalista' ? 'default' : 'secondary'}>
-                        {item.jogador.tipo}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">{item.pontuacaoTotal}</TableCell>
+            {ranking.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Jogador</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Pontos</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {ranking.slice(0, 5).map((item, index) => (
+                    <TableRow key={item.jogador.id}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell>{item.jogador.nome}</TableCell>
+                      <TableCell>
+                        <Badge variant={item.jogador.tipo === 'Mensalista' ? 'default' : 'secondary'}>
+                          {item.jogador.tipo}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">{item.pontuacaoTotal}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Nenhum dado de ranking disponível</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -197,32 +216,38 @@ const AdminDashboard: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Temporada</TableHead>
-                <TableHead>Jogadores</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {peladas.slice(-5).reverse().map((pelada) => (
-                <TableRow key={pelada.id}>
-                  <TableCell>
-                    {new Date(pelada.data).toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell>
-                    {temporadas.find(t => t.id === pelada.temporadaId)?.nome || 'N/A'}
-                  </TableCell>
-                  <TableCell>6 jogadores</TableCell>
-                  <TableCell>
-                    <Badge variant="default">Concluída</Badge>
-                  </TableCell>
+          {peladas.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Temporada</TableHead>
+                  <TableHead>Partidas</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {peladas.slice(-5).reverse().map((pelada) => (
+                  <TableRow key={pelada.id}>
+                    <TableCell>
+                      {new Date(pelada.data).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell>
+                      {temporadas.find(t => t.id === pelada.temporadaId)?.nome || 'N/A'}
+                    </TableCell>
+                    <TableCell>{pelada.partidas?.length || 0} partidas</TableCell>
+                    <TableCell>
+                      <Badge variant="default">Concluída</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground">Nenhuma pelada cadastrada ainda</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -26,18 +26,24 @@ const Index: React.FC = () => {
   const temporadaAtiva = temporadas.find(t => t.ativa);
   
   const { data: ranking = [] } = useQuery({
-    queryKey: ['ranking-geral'],
-    queryFn: () => calcularRanking(),
+    queryKey: ['ranking-home', temporadaAtiva?.id],
+    queryFn: () => temporadaAtiva ? calcularRanking(temporadaAtiva.id) : [],
+    enabled: !!temporadaAtiva,
   });
 
   // Calcular estatísticas dinâmicas
-  const jogadoresAtivos = jogadores.filter(j => j.ativo).length;
-  const ultimaPelada = peladas.length > 0 ? peladas[peladas.length - 1] : null;
+  const jogadoresAtivos = jogadores.filter(j => j.ativo);
+  const peladasTemporadaAtiva = temporadaAtiva ? peladas.filter(p => p.temporadaId === temporadaAtiva.id) : [];
+  const ultimaPelada = peladas.length > 0 ? [...peladas].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0] : null;
   const totalGols = ranking.reduce((total, jogador) => total + jogador.gols, 0);
   
   const liderRanking = ranking.length > 0 ? ranking[0] : null;
   const artilheiro = ranking.length > 0 ? [...ranking].sort((a, b) => b.gols - a.gols)[0] : null;
   const assistente = ranking.length > 0 ? [...ranking].sort((a, b) => b.assistencias - a.assistencias)[0] : null;
+
+  console.log('Index - Temporada ativa:', temporadaAtiva);
+  console.log('Index - Ranking:', ranking);
+  console.log('Index - Peladas da temporada:', peladasTemporadaAtiva);
 
   const quickActions = [
     {
@@ -80,7 +86,7 @@ const Index: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Users className="h-8 w-8 text-primary" />
-              <span className="text-3xl font-bold">{jogadoresAtivos}</span>
+              <span className="text-3xl font-bold">{jogadoresAtivos.length}</span>
             </div>
             <p className="text-muted-foreground">Jogadores Ativos</p>
           </CardContent>
@@ -90,9 +96,9 @@ const Index: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-center space-x-2 mb-2">
               <Calendar className="h-8 w-8 text-primary" />
-              <span className="text-3xl font-bold">{peladas.length}</span>
+              <span className="text-3xl font-bold">{peladasTemporadaAtiva.length}</span>
             </div>
-            <p className="text-muted-foreground">Total de Peladas</p>
+            <p className="text-muted-foreground">Peladas na Temporada</p>
           </CardContent>
         </Card>
         
@@ -124,6 +130,9 @@ const Index: React.FC = () => {
                 <p className="text-sm text-muted-foreground">
                   Temporada: {temporadas.find(t => t.id === ultimaPelada.temporadaId)?.nome || 'N/A'}
                 </p>
+                <p className="text-sm text-muted-foreground">
+                  Partidas: {ultimaPelada.partidas?.length || 0}
+                </p>
               </div>
               <Link to={`/pelada/${ultimaPelada.id}`}>
                 <Button variant="outline">Ver Detalhes</Button>
@@ -146,7 +155,7 @@ const Index: React.FC = () => {
               {liderRanking ? liderRanking.jogador.nome : 'N/A'}
             </p>
             <p className="text-sm text-muted-foreground">
-              {liderRanking ? `${liderRanking.pontuacaoTotal} pontos` : 'Sem dados'}
+              {liderRanking ? `${liderRanking.pontuacaoTotal} pontos` : 'Sem dados disponíveis'}
             </p>
           </CardContent>
         </Card>
@@ -162,7 +171,7 @@ const Index: React.FC = () => {
               {artilheiro ? artilheiro.jogador.nome : 'N/A'}
             </p>
             <p className="text-sm text-muted-foreground">
-              {artilheiro ? `${artilheiro.gols} gols` : 'Sem dados'}
+              {artilheiro ? `${artilheiro.gols} gols` : 'Sem dados disponíveis'}
             </p>
           </CardContent>
         </Card>
@@ -178,7 +187,7 @@ const Index: React.FC = () => {
               {assistente ? assistente.jogador.nome : 'N/A'}
             </p>
             <p className="text-sm text-muted-foreground">
-              {assistente ? `${assistente.assistencias} assistências` : 'Sem dados'}
+              {assistente ? `${assistente.assistencias} assistências` : 'Sem dados disponíveis'}
             </p>
           </CardContent>
         </Card>
@@ -199,7 +208,7 @@ const Index: React.FC = () => {
               <div>
                 <h3 className="font-semibold mb-2">{temporadaAtiva.nome}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Peladas realizadas: {peladas.filter(p => p.temporadaId === temporadaAtiva.id).length}
+                  Peladas realizadas: {peladasTemporadaAtiva.length}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Descartes permitidos: {temporadaAtiva.numeroDescartes}

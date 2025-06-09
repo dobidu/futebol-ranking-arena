@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar, Plus, Users, Trophy, Target, Trash2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { temporadaService, jogadorService, peladaService } from '@/services/dataService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,15 +27,17 @@ interface Time {
 
 interface EventoPartida {
   id: string;
-  tipo: 'Gol' | 'Assistência' | 'Cartão Amarelo' | 'Cartão Azul' | 'Cartão Vermelho';
+  tipo: 'gol' | 'cartao_amarelo' | 'cartao_azul' | 'cartao_vermelho';
   jogadorId: string;
-  jogadorAssistenciaId?: string;
+  assistidoPor?: string;
 }
 
 const AdminPeladas: React.FC = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedTemporada, setSelectedTemporada] = useState('');
   const [dataPelada, setDataPelada] = useState('');
+  const [peladaAtual, setPeladaAtual] = useState<string>('');
   const [jogadoresPresentes, setJogadoresPresentes] = useState<JogadorPresente[]>([]);
   const [times, setTimes] = useState<Time[]>([
     { letra: 'A', jogadores: [] },
@@ -68,11 +71,14 @@ const AdminPeladas: React.FC = () => {
     }
 
     try {
-      await peladaService.create({
+      const novaPelada = {
         data: new Date(dataPelada),
         temporadaId: selectedTemporada,
-        id: '',
-      });
+        partidas: [],
+        presencas: []
+      };
+
+      await peladaService.create(novaPelada);
 
       const jogadoresComPresenca = jogadores.filter(j => j.ativo).map(jogador => ({
         id: jogador.id,
@@ -82,6 +88,14 @@ const AdminPeladas: React.FC = () => {
       }));
 
       setJogadoresPresentes(jogadoresComPresenca);
+      
+      // Obter o ID da pelada criada
+      const peladas = peladaService.getAll();
+      const ultimaPelada = peladas[peladas.length - 1];
+      setPeladaAtual(ultimaPelada.id);
+
+      // Invalidar cache para atualizar outras páginas
+      queryClient.invalidateQueries({ queryKey: ['peladas'] });
       
       toast({
         title: "Sucesso",
@@ -139,7 +153,7 @@ const AdminPeladas: React.FC = () => {
       id: Date.now().toString(),
       tipo: tipoEvento as any,
       jogadorId: jogadorEvento,
-      jogadorAssistenciaId: assistenciaEvento || undefined
+      assistidoPor: assistenciaEvento || undefined
     };
 
     setEventos(prev => [...prev, novoEvento]);
@@ -155,6 +169,90 @@ const AdminPeladas: React.FC = () => {
 
   const removerEvento = (eventoId: string) => {
     setEventos(prev => prev.filter(e => e.id !== eventoId));
+  };
+
+  const finalizarPartida = async () => {
+    if (!peladaAtual) {
+      toast({
+        title: "Erro",
+        description: "Nenhuma pelada ativa para finalizar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const pelada = peladaService.getById(peladaAtual);
+      if (!pelada) {
+        toast({
+          title: "Erro",
+          description: "Pelada não encontrada",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const timeA = times.find(t => t.letra === 'A')?.jogadores || [];
+      const timeB = times.find(t => t.letra === 'B')?.jogadores || [];
+
+      const novaPartida = {
+        id: crypto.randomUUID(),
+        peladaId: peladaAtual,
+        numeroPartida: (pelada.partidas?.length || 0) + 1,
+        timeA,
+        timeB,
+        golsTimeA: placarA,
+        golsTimeB: placarB,
+        eventos: eventos.map(e => ({
+          ...e,
+          partidaId: '',
+          minuto: 0
+        }))
+      };
+
+      const presencasAtualizadas = jogadoresPresentes
+        .filter(j => j.presente)
+        .map(j => ({
+          id: crypto.randomUUID(),
+          peladaId: peladaAtual,
+          jogadorId: j.id,
+          presente: true,
+          atraso: 'nenhum' as const
+        }));
+
+      const peladaAtualizada = {
+        ...pelada,
+        partidas: [...(pelada.partidas || []), novaPartida],
+        presencas: presencasAtualizadas
+      };
+
+      peladaService.update(peladaAtual, peladaAtualizada);
+
+      // Invalidar cache para atualizar outras páginas
+      queryClient.invalidateQueries({ queryKey: ['peladas'] });
+      queryClient.invalidateQueries({ queryKey: ['ranking'] });
+      queryClient.invalidateQueries({ queryKey: ['ranking-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['ranking-reports'] });
+
+      // Resetar formulário
+      setTimes([{ letra: 'A', jogadores: [] }, { letra: 'B', jogadores: [] }]);
+      setPlacarA(0);
+      setPlacarB(0);
+      setEventos([]);
+      setJogadoresPresentes([]);
+      setPeladaAtual('');
+
+      toast({
+        title: "Sucesso",
+        description: "Partida finalizada com sucesso!"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao finalizar partida",
+        variant: "destructive"
+      });
+    }
   };
 
   const getJogadorNome = (id: string) => {
@@ -286,6 +384,11 @@ const AdminPeladas: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                  {jogadoresSemTime.length === 0 && (
+                    <p className="text-muted-foreground text-center py-4">
+                      {jogadoresDisponiveis.length === 0 ? 'Nenhum jogador presente' : 'Todos os jogadores já estão em times'}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -397,11 +500,10 @@ const AdminPeladas: React.FC = () => {
                           <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Gol">Gol</SelectItem>
-                          <SelectItem value="Assistência">Assistência</SelectItem>
-                          <SelectItem value="Cartão Amarelo">Cartão Amarelo</SelectItem>
-                          <SelectItem value="Cartão Azul">Cartão Azul</SelectItem>
-                          <SelectItem value="Cartão Vermelho">Cartão Vermelho</SelectItem>
+                          <SelectItem value="gol">Gol</SelectItem>
+                          <SelectItem value="cartao_amarelo">Cartão Amarelo</SelectItem>
+                          <SelectItem value="cartao_azul">Cartão Azul</SelectItem>
+                          <SelectItem value="cartao_vermelho">Cartão Vermelho</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -466,18 +568,20 @@ const AdminPeladas: React.FC = () => {
                           <TableRow key={evento.id}>
                             <TableCell>
                               <Badge variant={
-                                evento.tipo === 'Gol' ? 'default' :
-                                evento.tipo === 'Assistência' ? 'secondary' :
-                                evento.tipo === 'Cartão Amarelo' ? 'outline' :
-                                evento.tipo === 'Cartão Azul' ? 'outline' :
+                                evento.tipo === 'gol' ? 'default' :
+                                evento.tipo === 'cartao_amarelo' ? 'outline' :
+                                evento.tipo === 'cartao_azul' ? 'outline' :
                                 'destructive'
                               }>
-                                {evento.tipo}
+                                {evento.tipo === 'gol' ? 'Gol' : 
+                                 evento.tipo === 'cartao_amarelo' ? 'Cartão Amarelo' :
+                                 evento.tipo === 'cartao_azul' ? 'Cartão Azul' :
+                                 'Cartão Vermelho'}
                               </Badge>
                             </TableCell>
                             <TableCell>{getJogadorNome(evento.jogadorId)}</TableCell>
                             <TableCell>
-                              {evento.jogadorAssistenciaId ? getJogadorNome(evento.jogadorAssistenciaId) : '-'}
+                              {evento.assistidoPor ? getJogadorNome(evento.assistidoPor) : '-'}
                             </TableCell>
                             <TableCell>
                               <Button 
@@ -499,7 +603,7 @@ const AdminPeladas: React.FC = () => {
                   )}
                 </div>
 
-                <Button className="w-full">
+                <Button onClick={finalizarPartida} className="w-full" disabled={!peladaAtual}>
                   <Trophy className="h-4 w-4 mr-2" />
                   Finalizar Registro da Partida
                 </Button>
