@@ -4,56 +4,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Target, Users } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { temporadaService, calcularRanking } from '@/services/dataService';
 import { RankingJogador } from '@/types';
 
 const Rankings: React.FC = () => {
   const [selectedTemporada, setSelectedTemporada] = useState<string>('all');
 
-  // Dados de exemplo - serão substituídos por dados reais da API
-  const mockRankingData: RankingJogador[] = [
-    {
-      jogador: { id: '1', nome: 'João Silva', tipo: 'Mensalista', ativo: true, criadoEm: new Date() },
-      pontuacaoTotal: 450,
-      vitorias: 15,
-      presencas: 20,
-      gols: 8,
-      assistencias: 5,
-      cartoesAmarelos: 2,
-      cartoesAzuis: 0,
-      cartoesVermelhos: 0,
-      mediaPresenca: 0.85,
-      posicao: 1,
-    },
-    {
-      jogador: { id: '2', nome: 'Pedro Santos', tipo: 'Mensalista', ativo: true, criadoEm: new Date() },
-      pontuacaoTotal: 430,
-      vitorias: 14,
-      presencas: 18,
-      gols: 12,
-      assistencias: 3,
-      cartoesAmarelos: 1,
-      cartoesAzuis: 1,
-      cartoesVermelhos: 0,
-      mediaPresenca: 0.82,
-      posicao: 2,
-    },
-    {
-      jogador: { id: '3', nome: 'Carlos Oliveira', tipo: 'Convidado', ativo: true, criadoEm: new Date() },
-      pontuacaoTotal: 410,
-      vitorias: 13,
-      presencas: 16,
-      gols: 6,
-      assistencias: 8,
-      cartoesAmarelos: 0,
-      cartoesAzuis: 0,
-      cartoesVermelhos: 0,
-      mediaPresenca: 0.80,
-      posicao: 3,
-    },
-  ];
+  const { data: temporadas = [] } = useQuery({
+    queryKey: ['temporadas'],
+    queryFn: temporadaService.getAll,
+  });
 
-  const artilheiroData = [...mockRankingData].sort((a, b) => b.gols - a.gols);
-  const assistenciaData = [...mockRankingData].sort((a, b) => b.assistencias - a.assistencias);
+  const { data: rankingData = [] } = useQuery({
+    queryKey: ['ranking', selectedTemporada],
+    queryFn: () => calcularRanking(selectedTemporada === 'all' ? undefined : selectedTemporada),
+  });
+
+  const artilheiroData = [...rankingData].sort((a, b) => b.gols - a.gols);
+  const assistenciaData = [...rankingData].sort((a, b) => b.assistencias - a.assistencias);
 
   const RankingTable: React.FC<{ data: RankingJogador[]; type: 'geral' | 'artilharia' | 'assistencia' }> = ({ data, type }) => (
     <div className="overflow-x-auto">
@@ -108,13 +77,13 @@ const Rankings: React.FC = () => {
               {type === 'artilharia' && (
                 <>
                   <td className="py-3 px-4 font-semibold">{item.gols}</td>
-                  <td className="py-3 px-4">{(item.gols / item.presencas).toFixed(2)}</td>
+                  <td className="py-3 px-4">{item.presencas > 0 ? (item.gols / item.presencas).toFixed(2) : '0.00'}</td>
                 </>
               )}
               {type === 'assistencia' && (
                 <>
                   <td className="py-3 px-4 font-semibold">{item.assistencias}</td>
-                  <td className="py-3 px-4">{(item.assistencias / item.presencas).toFixed(2)}</td>
+                  <td className="py-3 px-4">{item.presencas > 0 ? (item.assistencias / item.presencas).toFixed(2) : '0.00'}</td>
                 </>
               )}
             </tr>
@@ -138,8 +107,11 @@ const Rankings: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as Temporadas</SelectItem>
-            <SelectItem value="2024.2">2024.2</SelectItem>
-            <SelectItem value="2024.1">2024.1</SelectItem>
+            {temporadas.filter(t => t.id && t.nome).map((temporada) => (
+              <SelectItem key={temporada.id} value={temporada.id}>
+                {temporada.nome}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -172,7 +144,7 @@ const Rankings: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RankingTable data={mockRankingData} type="geral" />
+              <RankingTable data={rankingData} type="geral" />
             </CardContent>
           </Card>
         </TabsContent>

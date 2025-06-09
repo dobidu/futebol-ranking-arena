@@ -149,7 +149,7 @@ const AdminPlayers = () => {
                   onValueChange={(value) => setFormData({...formData, tipo: value as 'Mensalista' | 'Convidado'})}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Mensalista">Mensalista</SelectItem>
