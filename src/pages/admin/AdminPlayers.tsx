@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,13 +44,19 @@ const AdminPlayers = () => {
     e.preventDefault();
     try {
       if (editingJogador) {
-        await jogadorService.update(editingJogador.id, formData);
+        await jogadorService.update(editingJogador.id, {
+          ...editingJogador,
+          ...formData
+        });
         toast({
           title: "Sucesso",
           description: "Jogador atualizado com sucesso"
         });
       } else {
-        await jogadorService.create(formData);
+        await jogadorService.create({
+          ...formData,
+          criadoEm: new Date()
+        });
         toast({
           title: "Sucesso",
           description: "Jogador criado com sucesso"

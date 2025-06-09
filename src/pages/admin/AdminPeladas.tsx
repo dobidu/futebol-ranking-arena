@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,7 +70,8 @@ const AdminPeladas: React.FC = () => {
     try {
       await peladaService.create({
         data: new Date(dataPelada),
-        temporadaId: selectedTemporada
+        temporadaId: selectedTemporada,
+        id: '',
       });
 
       const jogadoresComPresenca = jogadores.filter(j => j.ativo).map(jogador => ({

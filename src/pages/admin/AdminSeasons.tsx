@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,13 +51,19 @@ const AdminSeasons = () => {
     e.preventDefault();
     try {
       if (editingTemporada) {
-        await temporadaService.update(editingTemporada.id, formData);
+        await temporadaService.update(editingTemporada.id, {
+          ...editingTemporada,
+          ...formData
+        });
         toast({
           title: "Sucesso",
           description: "Temporada atualizada com sucesso"
         });
       } else {
-        await temporadaService.create(formData);
+        await temporadaService.create({
+          ...formData,
+          criadaEm: new Date()
+        });
         toast({
           title: "Sucesso",
           description: "Temporada criada com sucesso"
