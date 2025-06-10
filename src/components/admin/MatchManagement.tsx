@@ -6,8 +6,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, Trophy, AlertTriangle } from 'lucide-react';
-import { TimeNaPelada, Partida } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Play, Trophy, AlertTriangle, Target, Plus, Trash2 } from 'lucide-react';
+import { TimeNaPelada, Partida, Jogador } from '@/types';
+
+interface JogadorPresente {
+  id: string;
+  nome: string;
+  tipo: string;
+  presente: boolean;
+}
+
+interface EventoPartida {
+  id: string;
+  tipo: 'gol' | 'cartao_amarelo' | 'cartao_azul' | 'cartao_vermelho';
+  jogadorId: string;
+  assistidoPor?: string;
+}
 
 interface MatchManagementProps {
   times: TimeNaPelada[];
@@ -19,6 +35,11 @@ interface MatchManagementProps {
   setPlacarB: (value: number) => void;
   criarPartida: (timeAId: string, timeBId: string) => void;
   finalizarPartida: () => void;
+  jogadoresPresentes: JogadorPresente[];
+  jogadores: Jogador[];
+  eventos: EventoPartida[];
+  adicionarEvento: (tipo: string, jogadorId: string, assistenciaId?: string) => void;
+  removerEvento: (eventoId: string) => void;
 }
 
 const MatchManagement: React.FC<MatchManagementProps> = ({
@@ -30,10 +51,18 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
   setPlacarA,
   setPlacarB,
   criarPartida,
-  finalizarPartida
+  finalizarPartida,
+  jogadoresPresentes,
+  jogadores,
+  eventos,
+  adicionarEvento,
+  removerEvento
 }) => {
   const [timeAId, setTimeAId] = useState('');
   const [timeBId, setTimeBId] = useState('');
+  const [tipoEvento, setTipoEvento] = useState('');
+  const [jogadorEvento, setJogadorEvento] = useState('');
+  const [assistenciaEvento, setAssistenciaEvento] = useState('');
 
   const timesDisponiveis = times.filter(t => t.jogadores.length >= 5);
 
@@ -81,106 +110,263 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
     }
   };
 
+  const getJogadorNome = (id: string) => {
+    return jogadores.find(j => j.id === id)?.nome || 'Jogador não encontrado';
+  };
+
+  const jogadoresDisponiveis = jogadoresPresentes.filter(j => j.presente);
+
+  const jogadoresDaPartida = partidaAtual ? [
+    ...partidaAtual.timeA?.jogadores || [],
+    ...partidaAtual.timeB?.jogadores || []
+  ] : [];
+
+  const jogadoresPartidaComNomes = jogadoresDaPartida.map(id => ({
+    id,
+    nome: getJogadorNome(id)
+  }));
+
+  const handleAdicionarEvento = () => {
+    if (!tipoEvento || !jogadorEvento || !partidaAtual) {
+      return;
+    }
+
+    adicionarEvento(tipoEvento, jogadorEvento, assistenciaEvento || undefined);
+    setTipoEvento('');
+    setJogadorEvento('');
+    setAssistenciaEvento('');
+  };
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Play className="h-5 w-5" />
-            <span>Criar Partida</span>
-          </CardTitle>
-          <CardDescription>
-            Selecione dois times para criar uma partida (mínimo 5 jogadores por time)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Time A</Label>
-              <Select value={timeAId} onValueChange={setTimeAId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o Time A" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timesDisponiveis.map(time => (
-                    <SelectItem key={time.id} value={time.id}>
-                      Time {time.identificadorLetra} ({time.jogadores.length} jogadores)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {!partidaAtual && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Play className="h-5 w-5" />
+              <span>Criar Partida</span>
+            </CardTitle>
+            <CardDescription>
+              Selecione dois times para criar uma partida (mínimo 5 jogadores por time)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Time A</Label>
+                <Select value={timeAId} onValueChange={setTimeAId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o Time A" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timesDisponiveis.map(time => (
+                      <SelectItem key={time.id} value={time.id}>
+                        Time {time.identificadorLetra} ({time.jogadores.length} jogadores)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Time B</Label>
+                <Select value={timeBId} onValueChange={setTimeBId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o Time B" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timesDisponiveis.filter(t => t.id !== timeAId).map(time => (
+                      <SelectItem key={time.id} value={time.id}>
+                        Time {time.identificadorLetra} ({time.jogadores.length} jogadores)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Time B</Label>
-              <Select value={timeBId} onValueChange={setTimeBId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o Time B" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timesDisponiveis.filter(t => t.id !== timeAId).map(time => (
-                    <SelectItem key={time.id} value={time.id}>
-                      Time {time.identificadorLetra} ({time.jogadores.length} jogadores)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            {getConflitMessage() && (
+              <div className="flex items-center space-x-2 p-3 bg-destructive/15 border border-destructive/20 rounded-md">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <span className="text-sm text-destructive">{getConflitMessage()}</span>
+              </div>
+            )}
 
-          {getConflitMessage() && (
-            <div className="flex items-center space-x-2 p-3 bg-destructive/15 border border-destructive/20 rounded-md">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              <span className="text-sm text-destructive">{getConflitMessage()}</span>
-            </div>
-          )}
-
-          <Button 
-            onClick={handleCriarPartida}
-            disabled={!podeIniciarPartida()}
-            className="w-full"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Iniciar Partida
-          </Button>
-        </CardContent>
-      </Card>
+            <Button 
+              onClick={handleCriarPartida}
+              disabled={!podeIniciarPartida()}
+              className="w-full"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Iniciar Partida
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {partidaAtual && (
         <Card>
           <CardHeader>
             <CardTitle>
-              Partida: Time {partidaAtual.timeA?.identificadorLetra} x Time {partidaAtual.timeB?.identificadorLetra}
+              Partida Ativa: Time {partidaAtual.timeA?.identificadorLetra} x Time {partidaAtual.timeB?.identificadorLetra}
             </CardTitle>
+            <CardDescription>
+              Gerencie o placar e registre eventos da partida
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div className="space-y-2">
-                <Label>Time {partidaAtual.timeA?.identificadorLetra}</Label>
-                <Input 
-                  type="number" 
-                  value={placarA}
-                  onChange={(e) => setPlacarA(Number(e.target.value))}
-                  placeholder="Gols" 
-                  min="0" 
-                />
-              </div>
-              
-              <div className="text-center">
-                <span className="text-2xl font-bold">X</span>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Time {partidaAtual.timeB?.identificadorLetra}</Label>
-                <Input 
-                  type="number" 
-                  value={placarB}
-                  onChange={(e) => setPlacarB(Number(e.target.value))}
-                  placeholder="Gols" 
-                  min="0" 
-                />
+            {/* Seção do Placar */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Placar</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div className="space-y-2">
+                  <Label>Time {partidaAtual.timeA?.identificadorLetra}</Label>
+                  <Input 
+                    type="number" 
+                    value={placarA}
+                    onChange={(e) => setPlacarA(Number(e.target.value))}
+                    placeholder="Gols" 
+                    min="0" 
+                  />
+                </div>
+                
+                <div className="text-center">
+                  <span className="text-3xl font-bold">{placarA} x {placarB}</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Time {partidaAtual.timeB?.identificadorLetra}</Label>
+                  <Input 
+                    type="number" 
+                    value={placarB}
+                    onChange={(e) => setPlacarB(Number(e.target.value))}
+                    placeholder="Gols" 
+                    min="0" 
+                  />
+                </div>
               </div>
             </div>
+
+            <Separator />
+
+            {/* Seção de Eventos */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
+                <Target className="h-5 w-5" />
+                <span>Registrar Eventos</span>
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div className="space-y-2">
+                  <Label>Tipo de Evento</Label>
+                  <Select value={tipoEvento} onValueChange={setTipoEvento}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gol">Gol</SelectItem>
+                      <SelectItem value="cartao_amarelo">Cartão Amarelo</SelectItem>
+                      <SelectItem value="cartao_azul">Cartão Azul</SelectItem>
+                      <SelectItem value="cartao_vermelho">Cartão Vermelho</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Jogador</Label>
+                  <Select value={jogadorEvento} onValueChange={setJogadorEvento}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o jogador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jogadoresPartidaComNomes.map(jogador => (
+                        <SelectItem key={jogador.id} value={jogador.id}>
+                          {jogador.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Assistência (opcional)</Label>
+                  <Select value={assistenciaEvento} onValueChange={setAssistenciaEvento}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Jogador da assistência" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Nenhuma</SelectItem>
+                      {jogadoresPartidaComNomes
+                        .filter(j => j.id !== jogadorEvento)
+                        .map(jogador => (
+                          <SelectItem key={jogador.id} value={jogador.id}>
+                            {jogador.nome}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>&nbsp;</Label>
+                  <Button onClick={handleAdicionarEvento} className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Lista de Eventos */}
+              {eventos.length > 0 && (
+                <div className="space-y-4">
+                  <h4 className="font-medium">Eventos Registrados</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Jogador</TableHead>
+                        <TableHead>Assistência</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {eventos.map((evento) => (
+                        <TableRow key={evento.id}>
+                          <TableCell>
+                            <Badge variant={
+                              evento.tipo === 'gol' ? 'default' :
+                              evento.tipo === 'cartao_amarelo' ? 'outline' :
+                              evento.tipo === 'cartao_azul' ? 'outline' :
+                              'destructive'
+                            }>
+                              {evento.tipo === 'gol' ? 'Gol' : 
+                               evento.tipo === 'cartao_amarelo' ? 'Cartão Amarelo' :
+                               evento.tipo === 'cartao_azul' ? 'Cartão Azul' :
+                               'Cartão Vermelho'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{getJogadorNome(evento.jogadorId)}</TableCell>
+                          <TableCell>
+                            {evento.assistidoPor ? getJogadorNome(evento.assistidoPor) : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => removerEvento(evento.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+
+            <Separator />
 
             <Button onClick={finalizarPartida} className="w-full">
               <Trophy className="h-4 w-4 mr-2" />

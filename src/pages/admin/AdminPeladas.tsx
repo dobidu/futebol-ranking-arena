@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -43,9 +44,6 @@ const AdminPeladas: React.FC = () => {
   const [placarA, setPlacarA] = useState(0);
   const [placarB, setPlacarB] = useState(0);
   const [eventos, setEventos] = useState<EventoPartida[]>([]);
-  const [tipoEvento, setTipoEvento] = useState('');
-  const [jogadorEvento, setJogadorEvento] = useState('');
-  const [assistenciaEvento, setAssistenciaEvento] = useState('');
 
   const { data: temporadas = [] } = useQuery({
     queryKey: ['temporadas'],
@@ -210,8 +208,8 @@ const AdminPeladas: React.FC = () => {
     });
   };
 
-  const adicionarEvento = () => {
-    if (!tipoEvento || !jogadorEvento || !partidaAtual) {
+  const adicionarEvento = (tipo: string, jogadorId: string, assistidoPor?: string) => {
+    if (!tipo || !jogadorId || !partidaAtual) {
       toast({
         title: "Erro",
         description: "Selecione o tipo de evento e o jogador",
@@ -222,15 +220,12 @@ const AdminPeladas: React.FC = () => {
 
     const novoEvento: EventoPartida = {
       id: Date.now().toString(),
-      tipo: tipoEvento as any,
-      jogadorId: jogadorEvento,
-      assistidoPor: assistenciaEvento || undefined
+      tipo: tipo as any,
+      jogadorId: jogadorId,
+      assistidoPor: assistidoPor || undefined
     };
 
     setEventos(prev => [...prev, novoEvento]);
-    setTipoEvento('');
-    setJogadorEvento('');
-    setAssistenciaEvento('');
 
     toast({
       title: "Sucesso",
@@ -361,7 +356,7 @@ const AdminPeladas: React.FC = () => {
           <TabsTrigger value="nova-pelada">Nova Pelada</TabsTrigger>
           <TabsTrigger value="times">Formar Times</TabsTrigger>
           <TabsTrigger value="partidas">Partidas</TabsTrigger>
-          <TabsTrigger value="eventos">Eventos</TabsTrigger>
+          <TabsTrigger value="salvar">Finalizar</TabsTrigger>
         </TabsList>
 
         <TabsContent value="nova-pelada">
@@ -402,23 +397,28 @@ const AdminPeladas: React.FC = () => {
             setPlacarB={setPlacarB}
             criarPartida={criarPartida}
             finalizarPartida={finalizarPartida}
+            jogadoresPresentes={jogadoresPresentes}
+            jogadores={jogadores}
+            eventos={eventos}
+            adicionarEvento={adicionarEvento}
+            removerEvento={removerEvento}
           />
         </TabsContent>
 
-        <TabsContent value="eventos">
+        <TabsContent value="salvar">
           <EventRegistration
             eventos={eventos}
-            tipoEvento={tipoEvento}
-            jogadorEvento={jogadorEvento}
-            assistenciaEvento={assistenciaEvento}
+            tipoEvento=""
+            jogadorEvento=""
+            assistenciaEvento=""
             jogadoresPresentes={jogadoresPresentes}
             jogadores={jogadores}
             peladaAtual={peladaAtual}
             partidas={partidas}
-            setTipoEvento={setTipoEvento}
-            setJogadorEvento={setJogadorEvento}
-            setAssistenciaEvento={setAssistenciaEvento}
-            adicionarEvento={adicionarEvento}
+            setTipoEvento={() => {}}
+            setJogadorEvento={() => {}}
+            setAssistenciaEvento={() => {}}
+            adicionarEvento={() => {}}
             removerEvento={removerEvento}
             salvarPelada={salvarPelada}
           />
