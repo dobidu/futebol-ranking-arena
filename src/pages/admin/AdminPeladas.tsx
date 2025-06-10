@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +7,6 @@ import { TimeNaPelada, Partida } from '@/types';
 import PeladaCreationForm from '@/components/admin/PeladaCreationForm';
 import TeamFormation from '@/components/admin/TeamFormation';
 import MatchManagement from '@/components/admin/MatchManagement';
-import EventRegistration from '@/components/admin/EventRegistration';
 
 interface JogadorPresente {
   id: string;
@@ -406,22 +404,39 @@ const AdminPeladas: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="salvar">
-          <EventRegistration
-            eventos={eventos}
-            tipoEvento=""
-            jogadorEvento=""
-            assistenciaEvento=""
-            jogadoresPresentes={jogadoresPresentes}
-            jogadores={jogadores}
-            peladaAtual={peladaAtual}
-            partidas={partidas}
-            setTipoEvento={() => {}}
-            setJogadorEvento={() => {}}
-            setAssistenciaEvento={() => {}}
-            adicionarEvento={() => {}}
-            removerEvento={removerEvento}
-            salvarPelada={salvarPelada}
-          />
+          <div className="space-y-6">
+            <div className="bg-card p-6 rounded-lg border">
+              <h3 className="text-lg font-semibold mb-4">Finalizar Pelada</h3>
+              <p className="text-muted-foreground mb-4">
+                Revise os dados e salve a pelada no sistema.
+              </p>
+              
+              {partidas.length > 0 ? (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium">Resumo:</h4>
+                    <ul className="text-sm text-muted-foreground mt-2">
+                      <li>• {jogadoresPresentes.filter(j => j.presente).length} jogadores presentes</li>
+                      <li>• {times.length} times formados</li>
+                      <li>• {partidas.length} partida(s) realizada(s)</li>
+                      <li>• {eventos.length} evento(s) registrado(s)</li>
+                    </ul>
+                  </div>
+                  
+                  <button
+                    onClick={salvarPelada}
+                    className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Salvar Pelada
+                  </button>
+                </div>
+              ) : (
+                <p className="text-muted-foreground">
+                  Adicione pelo menos uma partida antes de finalizar.
+                </p>
+              )}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
