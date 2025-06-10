@@ -64,9 +64,14 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
   const [jogadorEvento, setJogadorEvento] = useState('');
   const [assistenciaEvento, setAssistenciaEvento] = useState('');
 
-  const timesDisponiveis = times.filter(t => t.jogadores.length >= 5);
+  // Garantir que só times com pelo menos 5 jogadores apareçam
+  const timesDisponiveis = times.filter(t => t.jogadores && t.jogadores.length >= 5);
+
+  console.log('MatchManagement - Times disponíveis:', timesDisponiveis);
+  console.log('MatchManagement - Partida atual:', partidaAtual);
 
   const verificarJogadoresComuns = (timeA: TimeNaPelada, timeB: TimeNaPelada) => {
+    if (!timeA.jogadores || !timeB.jogadores) return [];
     const jogadoresComuns = timeA.jogadores.filter(jogadorId => 
       timeB.jogadores.includes(jogadorId)
     );
@@ -111,14 +116,13 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
   };
 
   const getJogadorNome = (id: string) => {
-    return jogadores.find(j => j.id === id)?.nome || 'Jogador não encontrado';
+    const jogador = jogadores.find(j => j.id === id);
+    return jogador ? jogador.nome : 'Jogador não encontrado';
   };
 
-  const jogadoresDisponiveis = jogadoresPresentes.filter(j => j.presente);
-
   const jogadoresDaPartida = partidaAtual ? [
-    ...partidaAtual.timeA?.jogadores || [],
-    ...partidaAtual.timeB?.jogadores || []
+    ...(partidaAtual.timeA?.jogadores || []),
+    ...(partidaAtual.timeB?.jogadores || [])
   ] : [];
 
   const jogadoresPartidaComNomes = jogadoresDaPartida.map(id => ({
@@ -135,6 +139,36 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
     setTipoEvento('');
     setJogadorEvento('');
     setAssistenciaEvento('');
+  };
+
+  const getTipoEventoLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'gol':
+        return 'Gol';
+      case 'cartao_amarelo':
+        return 'Cartão Amarelo';
+      case 'cartao_azul':
+        return 'Cartão Azul';
+      case 'cartao_vermelho':
+        return 'Cartão Vermelho';
+      default:
+        return tipo;
+    }
+  };
+
+  const getTipoEventoBadgeVariant = (tipo: string) => {
+    switch (tipo) {
+      case 'gol':
+        return 'default';
+      case 'cartao_amarelo':
+        return 'outline';
+      case 'cartao_azul':
+        return 'outline';
+      case 'cartao_vermelho':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
   };
 
   return (
@@ -295,7 +329,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                       <SelectValue placeholder="Jogador da assistência" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nenhuma</SelectItem>
+                      <SelectItem value="nenhuma">Nenhuma</SelectItem>
                       {jogadoresPartidaComNomes
                         .filter(j => j.id !== jogadorEvento)
                         .map(jogador => (
@@ -333,21 +367,15 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                       {eventos.map((evento) => (
                         <TableRow key={evento.id}>
                           <TableCell>
-                            <Badge variant={
-                              evento.tipo === 'gol' ? 'default' :
-                              evento.tipo === 'cartao_amarelo' ? 'outline' :
-                              evento.tipo === 'cartao_azul' ? 'outline' :
-                              'destructive'
-                            }>
-                              {evento.tipo === 'gol' ? 'Gol' : 
-                               evento.tipo === 'cartao_amarelo' ? 'Cartão Amarelo' :
-                               evento.tipo === 'cartao_azul' ? 'Cartão Azul' :
-                               'Cartão Vermelho'}
+                            <Badge variant={getTipoEventoBadgeVariant(evento.tipo)}>
+                              {getTipoEventoLabel(evento.tipo)}
                             </Badge>
                           </TableCell>
                           <TableCell>{getJogadorNome(evento.jogadorId)}</TableCell>
                           <TableCell>
-                            {evento.assistidoPor ? getJogadorNome(evento.assistidoPor) : '-'}
+                            {evento.assistidoPor && evento.assistidoPor !== 'nenhuma' 
+                              ? getJogadorNome(evento.assistidoPor) 
+                              : '-'}
                           </TableCell>
                           <TableCell>
                             <Button 

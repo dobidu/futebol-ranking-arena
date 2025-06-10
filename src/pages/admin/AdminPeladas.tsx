@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -53,6 +54,10 @@ const AdminPeladas: React.FC = () => {
     queryFn: jogadorService.getAll,
   });
 
+  console.log('AdminPeladas - Times:', times);
+  console.log('AdminPeladas - Partida atual:', partidaAtual);
+  console.log('AdminPeladas - Jogadores:', jogadores);
+
   const criarPelada = async () => {
     if (!selectedTemporada || !dataPelada) {
       toast({
@@ -89,6 +94,8 @@ const AdminPeladas: React.FC = () => {
       setTimes([]);
       setPartidas([]);
       setProximaLetra('A');
+      setPartidaAtual(null);
+      setEventos([]);
 
       queryClient.invalidateQueries({ queryKey: ['peladas'] });
       
@@ -97,6 +104,7 @@ const AdminPeladas: React.FC = () => {
         description: "Pelada criada com sucesso!"
       });
     } catch (error) {
+      console.error('Erro ao criar pelada:', error);
       toast({
         title: "Erro",
         description: "Erro ao criar pelada",
@@ -166,6 +174,8 @@ const AdminPeladas: React.FC = () => {
     const timeA = times.find(t => t.id === timeAId);
     const timeB = times.find(t => t.id === timeBId);
 
+    console.log('Criando partida:', { timeAId, timeBId, timeA, timeB });
+
     if (!timeA || !timeB) {
       toast({
         title: "Erro",
@@ -195,6 +205,8 @@ const AdminPeladas: React.FC = () => {
       timeB
     };
 
+    console.log('Nova partida criada:', novaPartida);
+
     setPartidaAtual(novaPartida);
     setPlacarA(0);
     setPlacarB(0);
@@ -220,7 +232,7 @@ const AdminPeladas: React.FC = () => {
       id: Date.now().toString(),
       tipo: tipo as any,
       jogadorId: jogadorId,
-      assistidoPor: assistidoPor || undefined
+      assistidoPor: assistidoPor && assistidoPor !== 'nenhuma' ? assistidoPor : undefined
     };
 
     setEventos(prev => [...prev, novoEvento]);
@@ -255,7 +267,7 @@ const AdminPeladas: React.FC = () => {
     setPartidaAtual(null);
     setPlacarA(0);
     setPlacarB(0);
-    setEventos([]);
+    // Manter eventos para a próxima salvada
 
     toast({
       title: "Sucesso",
@@ -302,11 +314,13 @@ const AdminPeladas: React.FC = () => {
         timeB: p.timeB?.jogadores || [],
         golsTimeA: p.placarA,
         golsTimeB: p.placarB,
-        eventos: eventos.map(e => ({
-          ...e,
-          partidaId: p.id,
-          minuto: 0
-        }))
+        eventos: eventos
+          .filter(e => eventos.some(ev => ev.id === e.id)) // Eventos da partida
+          .map(e => ({
+            ...e,
+            partidaId: p.id,
+            minuto: 0
+          }))
       }));
 
       const peladaAtualizada = {
@@ -322,18 +336,23 @@ const AdminPeladas: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['ranking-admin'] });
       queryClient.invalidateQueries({ queryKey: ['ranking-reports'] });
 
+      // Reset states
       setTimes([]);
       setPartidas([]);
       setJogadoresPresentes([]);
       setPeladaAtual('');
       setProximaLetra('A');
       setPartidaAtual(null);
+      setEventos([]);
+      setSelectedTemporada('');
+      setDataPelada('');
 
       toast({
         title: "Sucesso",
         description: "Pelada salva com sucesso!"
       });
     } catch (error) {
+      console.error('Erro ao salvar pelada:', error);
       toast({
         title: "Erro",
         description: "Erro ao salvar pelada",
