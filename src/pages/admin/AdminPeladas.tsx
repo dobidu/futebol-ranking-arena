@@ -1,49 +1,18 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { temporadaService, jogadorService, peladaService } from '@/services/dataService';
-import { useToast } from '@/hooks/use-toast';
-import { TimeNaPelada, Partida } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { temporadaService, jogadorService } from '@/services/dataService';
 import PeladaCreationForm from '@/components/admin/PeladaCreationForm';
 import TeamFormation from '@/components/admin/TeamFormation';
 import MatchManagement from '@/components/admin/MatchManagement';
-
-interface JogadorPresente {
-  id: string;
-  nome: string;
-  tipo: string;
-  presente: boolean;
-}
-
-interface EventoPartida {
-  id: string;
-  tipo: 'gol' | 'cartao_amarelo' | 'cartao_azul' | 'cartao_vermelho';
-  jogadorId: string;
-  assistidoPor?: string;
-}
+import FinalizarPelada from '@/components/admin/FinalizarPelada';
+import { usePeladaState } from '@/hooks/usePeladaState';
+import { usePeladaActions } from '@/hooks/usePeladaActions';
 
 const AdminPeladas: React.FC = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const peladaState = usePeladaState();
   
-  // Estados para criação de pelada
-  const [selectedTemporada, setSelectedTemporada] = useState('');
-  const [dataPelada, setDataPelada] = useState('');
-  const [peladaAtual, setPeladaAtual] = useState<string>('');
-  const [jogadoresPresentes, setJogadoresPresentes] = useState<JogadorPresente[]>([]);
-  
-  // Estados para times
-  const [times, setTimes] = useState<TimeNaPelada[]>([]);
-  const [proximaLetra, setProximaLetra] = useState('A');
-  
-  // Estados para partidas
-  const [partidas, setPartidas] = useState<Partida[]>([]);
-  const [partidaAtual, setPartidaAtual] = useState<Partida | null>(null);
-  const [placarA, setPlacarA] = useState(0);
-  const [placarB, setPlacarB] = useState(0);
-  const [eventos, setEventos] = useState<EventoPartida[]>([]);
-
   const { data: temporadas = [] } = useQuery({
     queryKey: ['temporadas'],
     queryFn: temporadaService.getAll,
@@ -54,312 +23,14 @@ const AdminPeladas: React.FC = () => {
     queryFn: jogadorService.getAll,
   });
 
-  console.log('AdminPeladas - Times:', times);
-  console.log('AdminPeladas - Partida atual:', partidaAtual);
+  const peladaActions = usePeladaActions({
+    ...peladaState,
+    jogadores
+  });
+
+  console.log('AdminPeladas - Times:', peladaState.times);
+  console.log('AdminPeladas - Partida atual:', peladaState.partidaAtual);
   console.log('AdminPeladas - Jogadores:', jogadores);
-
-  const criarPelada = async () => {
-    if (!selectedTemporada || !dataPelada) {
-      toast({
-        title: "Erro",
-        description: "Selecione uma temporada e data",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const novaPelada = {
-        data: new Date(dataPelada),
-        temporadaId: selectedTemporada,
-        partidas: [],
-        presencas: []
-      };
-
-      await peladaService.create(novaPelada);
-
-      const jogadoresComPresenca = jogadores.filter(j => j.ativo).map(jogador => ({
-        id: jogador.id,
-        nome: jogador.nome,
-        tipo: jogador.tipo,
-        presente: false
-      }));
-
-      setJogadoresPresentes(jogadoresComPresenca);
-      
-      const peladas = peladaService.getAll();
-      const ultimaPelada = peladas[peladas.length - 1];
-      setPeladaAtual(ultimaPelada.id);
-
-      setTimes([]);
-      setPartidas([]);
-      setProximaLetra('A');
-      setPartidaAtual(null);
-      setEventos([]);
-
-      queryClient.invalidateQueries({ queryKey: ['peladas'] });
-      
-      toast({
-        title: "Sucesso",
-        description: "Pelada criada com sucesso!"
-      });
-    } catch (error) {
-      console.error('Erro ao criar pelada:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao criar pelada",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const togglePresenca = (jogadorId: string) => {
-    setJogadoresPresentes(prev => 
-      prev.map(j => 
-        j.id === jogadorId ? { ...j, presente: !j.presente } : j
-      )
-    );
-  };
-
-  const criarTime = () => {
-    if (!peladaAtual) {
-      toast({
-        title: "Erro",
-        description: "Crie uma pelada primeiro",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const novoTime: TimeNaPelada = {
-      id: crypto.randomUUID(),
-      peladaId: peladaAtual,
-      identificadorLetra: proximaLetra,
-      jogadores: []
-    };
-
-    setTimes(prev => [...prev, novoTime]);
-    
-    const proximaChr = String.fromCharCode(proximaLetra.charCodeAt(0) + 1);
-    setProximaLetra(proximaChr);
-
-    toast({
-      title: "Sucesso",
-      description: `Time ${proximaLetra} criado!`
-    });
-  };
-
-  const adicionarJogadorAoTime = (jogadorId: string, timeId: string) => {
-    const jogadorPresente = jogadoresPresentes.find(j => j.id === jogadorId && j.presente);
-    if (!jogadorPresente) return;
-
-    setTimes(prev => prev.map(time => {
-      if (time.id === timeId && !time.jogadores.includes(jogadorId) && time.jogadores.length < 6) {
-        return { ...time, jogadores: [...time.jogadores, jogadorId] };
-      }
-      return time;
-    }));
-  };
-
-  const removerJogadorDoTime = (jogadorId: string, timeId: string) => {
-    setTimes(prev => prev.map(time => {
-      if (time.id === timeId) {
-        return { ...time, jogadores: time.jogadores.filter(id => id !== jogadorId) };
-      }
-      return time;
-    }));
-  };
-
-  const criarPartida = (timeAId: string, timeBId: string) => {
-    const timeA = times.find(t => t.id === timeAId);
-    const timeB = times.find(t => t.id === timeBId);
-
-    console.log('Criando partida:', { timeAId, timeBId, timeA, timeB });
-
-    if (!timeA || !timeB) {
-      toast({
-        title: "Erro",
-        description: "Selecione dois times válidos",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (timeA.jogadores.length < 5 || timeB.jogadores.length < 5) {
-      toast({
-        title: "Erro",
-        description: "Cada time deve ter pelo menos 5 jogadores",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const novaPartida: Partida = {
-      id: crypto.randomUUID(),
-      peladaId: peladaAtual,
-      timeAId,
-      timeBId,
-      placarA: 0,
-      placarB: 0,
-      timeA,
-      timeB
-    };
-
-    console.log('Nova partida criada:', novaPartida);
-
-    setPartidaAtual(novaPartida);
-    setPlacarA(0);
-    setPlacarB(0);
-    setEventos([]);
-
-    toast({
-      title: "Sucesso",
-      description: `Partida ${timeA.identificadorLetra} x ${timeB.identificadorLetra} iniciada!`
-    });
-  };
-
-  const adicionarEvento = (tipo: string, jogadorId: string, assistidoPor?: string) => {
-    if (!tipo || !jogadorId || !partidaAtual) {
-      toast({
-        title: "Erro",
-        description: "Selecione o tipo de evento e o jogador",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const novoEvento: EventoPartida = {
-      id: Date.now().toString(),
-      tipo: tipo as any,
-      jogadorId: jogadorId,
-      assistidoPor: assistidoPor && assistidoPor !== 'nenhuma' ? assistidoPor : undefined
-    };
-
-    setEventos(prev => [...prev, novoEvento]);
-
-    toast({
-      title: "Sucesso",
-      description: "Evento adicionado!"
-    });
-  };
-
-  const removerEvento = (eventoId: string) => {
-    setEventos(prev => prev.filter(e => e.id !== eventoId));
-  };
-
-  const finalizarPartida = () => {
-    if (!partidaAtual) {
-      toast({
-        title: "Erro",
-        description: "Nenhuma partida ativa",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const partidaFinalizada: Partida = {
-      ...partidaAtual,
-      placarA,
-      placarB
-    };
-
-    setPartidas(prev => [...prev, partidaFinalizada]);
-    setPartidaAtual(null);
-    setPlacarA(0);
-    setPlacarB(0);
-    // Manter eventos para a próxima salvada
-
-    toast({
-      title: "Sucesso",
-      description: "Partida finalizada!"
-    });
-  };
-
-  const salvarPelada = async () => {
-    if (!peladaAtual || partidas.length === 0) {
-      toast({
-        title: "Erro",
-        description: "Adicione pelo menos uma partida antes de salvar",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const pelada = peladaService.getById(peladaAtual);
-      if (!pelada) {
-        toast({
-          title: "Erro",
-          description: "Pelada não encontrada",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const presencasAtualizadas = jogadoresPresentes
-        .filter(j => j.presente)
-        .map(j => ({
-          id: crypto.randomUUID(),
-          peladaId: peladaAtual,
-          jogadorId: j.id,
-          presente: true,
-          atraso: 'nenhum' as const
-        }));
-
-      const partidasFormatadas = partidas.map(p => ({
-        id: p.id,
-        peladaId: p.peladaId,
-        numeroPartida: partidas.indexOf(p) + 1,
-        timeA: p.timeA?.jogadores || [],
-        timeB: p.timeB?.jogadores || [],
-        golsTimeA: p.placarA,
-        golsTimeB: p.placarB,
-        eventos: eventos
-          .filter(e => eventos.some(ev => ev.id === e.id)) // Eventos da partida
-          .map(e => ({
-            ...e,
-            partidaId: p.id,
-            minuto: 0
-          }))
-      }));
-
-      const peladaAtualizada = {
-        ...pelada,
-        partidas: partidasFormatadas,
-        presencas: presencasAtualizadas
-      };
-
-      peladaService.update(peladaAtual, peladaAtualizada);
-
-      queryClient.invalidateQueries({ queryKey: ['peladas'] });
-      queryClient.invalidateQueries({ queryKey: ['ranking'] });
-      queryClient.invalidateQueries({ queryKey: ['ranking-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['ranking-reports'] });
-
-      // Reset states
-      setTimes([]);
-      setPartidas([]);
-      setJogadoresPresentes([]);
-      setPeladaAtual('');
-      setProximaLetra('A');
-      setPartidaAtual(null);
-      setEventos([]);
-      setSelectedTemporada('');
-      setDataPelada('');
-
-      toast({
-        title: "Sucesso",
-        description: "Pelada salva com sucesso!"
-      });
-    } catch (error) {
-      console.error('Erro ao salvar pelada:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar pelada",
-        variant: "destructive"
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -380,82 +51,56 @@ const AdminPeladas: React.FC = () => {
           <PeladaCreationForm
             temporadas={temporadas}
             jogadores={jogadores}
-            selectedTemporada={selectedTemporada}
-            setSelectedTemporada={setSelectedTemporada}
-            dataPelada={dataPelada}
-            setDataPelada={setDataPelada}
-            jogadoresPresentes={jogadoresPresentes}
-            criarPelada={criarPelada}
-            togglePresenca={togglePresenca}
+            selectedTemporada={peladaState.selectedTemporada}
+            setSelectedTemporada={peladaState.setSelectedTemporada}
+            dataPelada={peladaState.dataPelada}
+            setDataPelada={peladaState.setDataPelada}
+            jogadoresPresentes={peladaState.jogadoresPresentes}
+            criarPelada={peladaActions.criarPelada}
+            togglePresenca={peladaActions.togglePresenca}
           />
         </TabsContent>
 
         <TabsContent value="times">
           <TeamFormation
-            times={times}
-            proximaLetra={proximaLetra}
-            jogadoresPresentes={jogadoresPresentes}
+            times={peladaState.times}
+            proximaLetra={peladaState.proximaLetra}
+            jogadoresPresentes={peladaState.jogadoresPresentes}
             jogadores={jogadores}
-            peladaAtual={peladaAtual}
-            criarTime={criarTime}
-            adicionarJogadorAoTime={adicionarJogadorAoTime}
-            removerJogadorDoTime={removerJogadorDoTime}
+            peladaAtual={peladaState.peladaAtual}
+            criarTime={peladaActions.criarTime}
+            adicionarJogadorAoTime={peladaActions.adicionarJogadorAoTime}
+            removerJogadorDoTime={peladaActions.removerJogadorDoTime}
           />
         </TabsContent>
 
         <TabsContent value="partidas">
           <MatchManagement
-            times={times}
-            partidas={partidas}
-            partidaAtual={partidaAtual}
-            placarA={placarA}
-            placarB={placarB}
-            setPlacarA={setPlacarA}
-            setPlacarB={setPlacarB}
-            criarPartida={criarPartida}
-            finalizarPartida={finalizarPartida}
-            jogadoresPresentes={jogadoresPresentes}
+            times={peladaState.times}
+            partidas={peladaState.partidas}
+            partidaAtual={peladaState.partidaAtual}
+            placarA={peladaState.placarA}
+            placarB={peladaState.placarB}
+            setPlacarA={peladaState.setPlacarA}
+            setPlacarB={peladaState.setPlacarB}
+            criarPartida={peladaActions.criarPartida}
+            finalizarPartida={peladaActions.finalizarPartida}
+            jogadoresPresentes={peladaState.jogadoresPresentes}
             jogadores={jogadores}
-            eventos={eventos}
-            adicionarEvento={adicionarEvento}
-            removerEvento={removerEvento}
+            eventos={peladaState.eventos}
+            adicionarEvento={peladaActions.adicionarEvento}
+            removerEvento={peladaActions.removerEvento}
           />
         </TabsContent>
 
         <TabsContent value="salvar">
-          <div className="space-y-6">
-            <div className="bg-card p-6 rounded-lg border">
-              <h3 className="text-lg font-semibold mb-4">Finalizar Pelada</h3>
-              <p className="text-muted-foreground mb-4">
-                Revise os dados e salve a pelada no sistema.
-              </p>
-              
-              {partidas.length > 0 ? (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium">Resumo:</h4>
-                    <ul className="text-sm text-muted-foreground mt-2">
-                      <li>• {jogadoresPresentes.filter(j => j.presente).length} jogadores presentes</li>
-                      <li>• {times.length} times formados</li>
-                      <li>• {partidas.length} partida(s) realizada(s)</li>
-                      <li>• {eventos.length} evento(s) registrado(s)</li>
-                    </ul>
-                  </div>
-                  
-                  <button
-                    onClick={salvarPelada}
-                    className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-                  >
-                    Salvar Pelada
-                  </button>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">
-                  Adicione pelo menos uma partida antes de finalizar.
-                </p>
-              )}
-            </div>
-          </div>
+          <FinalizarPelada
+            jogadoresPresentes={peladaState.jogadoresPresentes}
+            times={peladaState.times}
+            partidas={peladaState.partidas}
+            eventos={peladaState.eventos}
+            salvarPelada={peladaActions.salvarPelada}
+          />
         </TabsContent>
       </Tabs>
     </div>
