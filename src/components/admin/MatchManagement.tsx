@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -130,6 +129,25 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
     nome: getJogadorNome(id)
   }));
 
+  // Filtrar jogadores de assistência baseado no time do autor do gol
+  const getJogadoresAssistencia = () => {
+    if (!jogadorEvento || !partidaAtual || tipoEvento !== 'gol') {
+      return [];
+    }
+
+    const timeDoJogador = partidaAtual.timeA?.jogadores.includes(jogadorEvento) ? 'A' : 'B';
+    const jogadoresDoMesmoTime = timeDoJogador === 'A' 
+      ? partidaAtual.timeA?.jogadores || []
+      : partidaAtual.timeB?.jogadores || [];
+
+    return jogadoresDoMesmoTime
+      .filter(id => id !== jogadorEvento)
+      .map(id => ({
+        id,
+        nome: getJogadorNome(id)
+      }));
+  };
+
   const handleAdicionarEvento = () => {
     if (!tipoEvento || !jogadorEvento || !partidaAtual) {
       return;
@@ -170,6 +188,8 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
         return 'outline';
     }
   };
+
+  const isCartaoEvento = ['cartao_amarelo', 'cartao_azul', 'cartao_vermelho'].includes(tipoEvento);
 
   return (
     <div className="space-y-6">
@@ -322,24 +342,24 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                   </Select>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>Assistência (opcional)</Label>
-                  <Select value={assistenciaEvento} onValueChange={setAssistenciaEvento}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Jogador da assistência" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nenhuma">Nenhuma</SelectItem>
-                      {jogadoresPartidaComNomes
-                        .filter(j => j.id !== jogadorEvento)
-                        .map(jogador => (
+                {!isCartaoEvento && (
+                  <div className="space-y-2">
+                    <Label>Assistência (opcional)</Label>
+                    <Select value={assistenciaEvento} onValueChange={setAssistenciaEvento}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Jogador da assistência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nenhuma">Nenhuma</SelectItem>
+                        {getJogadoresAssistencia().map(jogador => (
                           <SelectItem key={jogador.id} value={jogador.id}>
                             {jogador.nome}
                           </SelectItem>
                         ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>&nbsp;</Label>

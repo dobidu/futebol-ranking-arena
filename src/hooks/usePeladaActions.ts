@@ -41,6 +41,7 @@ interface UsePeladaActionsProps {
   partidas: Partida[];
   eventos: EventoPartida[];
   resetStates: () => void;
+  onTabChange?: (tab: string) => void;
 }
 
 export const usePeladaActions = ({
@@ -65,7 +66,8 @@ export const usePeladaActions = ({
   placarB,
   partidas,
   eventos,
-  resetStates
+  resetStates,
+  onTabChange
 }: UsePeladaActionsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -115,6 +117,11 @@ export const usePeladaActions = ({
         title: "Sucesso",
         description: "Pelada criada com sucesso!"
       });
+
+      // Navegar automaticamente para a aba "times"
+      if (onTabChange) {
+        onTabChange('times');
+      }
     } catch (error) {
       console.error('Erro ao criar pelada:', error);
       toast({
@@ -248,6 +255,17 @@ export const usePeladaActions = ({
     };
 
     setEventos(prev => [...prev, novoEvento]);
+
+    // Se for um gol, atualizar automaticamente o placar
+    if (tipo === 'gol' && partidaAtual) {
+      const timeDoJogador = partidaAtual.timeA?.jogadores.includes(jogadorId) ? 'A' : 'B';
+      
+      if (timeDoJogador === 'A') {
+        setPlacarA(prev => prev + 1);
+      } else {
+        setPlacarB(prev => prev + 1);
+      }
+    }
 
     toast({
       title: "Sucesso",

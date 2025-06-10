@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { temporadaService, jogadorService } from '@/services/dataService';
@@ -11,6 +11,7 @@ import { usePeladaState } from '@/hooks/usePeladaState';
 import { usePeladaActions } from '@/hooks/usePeladaActions';
 
 const AdminPeladas: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('nova-pelada');
   const peladaState = usePeladaState();
   
   const { data: temporadas = [] } = useQuery({
@@ -25,7 +26,8 @@ const AdminPeladas: React.FC = () => {
 
   const peladaActions = usePeladaActions({
     ...peladaState,
-    jogadores
+    jogadores,
+    onTabChange: setActiveTab
   });
 
   console.log('AdminPeladas - Times:', peladaState.times);
@@ -39,7 +41,7 @@ const AdminPeladas: React.FC = () => {
         <p className="text-muted-foreground">Registre peladas com múltiplos times e partidas</p>
       </div>
 
-      <Tabs defaultValue="nova-pelada" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="nova-pelada">Nova Pelada</TabsTrigger>
           <TabsTrigger value="times">Formar Times</TabsTrigger>

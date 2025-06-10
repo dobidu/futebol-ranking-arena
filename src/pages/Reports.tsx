@@ -44,13 +44,16 @@ const Reports: React.FC = () => {
     ? peladas.filter(p => p.temporadaId === selectedTemporada)
     : peladas;
 
-  // Calcular estatísticas dinâmicas
-  const totalGols = ranking.reduce((total, j) => total + j.gols, 0);
-  const totalPartidas = peladasFiltradas.reduce((total, pelada) => total + pelada.partidas.length, 0);
+  // Calcular estatísticas dinâmicas com verificações de segurança
+  const totalGols = ranking.reduce((total, j) => total + (j.gols || 0), 0);
+  const totalPartidas = peladasFiltradas.reduce((total, pelada) => {
+    const partidasCount = pelada.partidas?.length || 0;
+    return total + partidasCount;
+  }, 0);
   const mediaGolsPorJogo = totalPartidas > 0 ? (totalGols / totalPartidas).toFixed(1) : '0.0';
   const totalJogadores = ranking.length;
-  const presencaMedia = ranking.length > 0 
-    ? (ranking.reduce((total, j) => total + j.presencas, 0) / ranking.length / peladasFiltradas.length * 100).toFixed(0)
+  const presencaMedia = ranking.length > 0 && peladasFiltradas.length > 0
+    ? (ranking.reduce((total, j) => total + (j.presencas || 0), 0) / ranking.length / peladasFiltradas.length * 100).toFixed(0)
     : '0';
 
   console.log('Reports - Temporada selecionada:', selectedTemporada);
