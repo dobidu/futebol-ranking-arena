@@ -6,84 +6,116 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { User, Trophy, Target, Users, ArrowLeft, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { jogadorService, peladaService, temporadaService, calcularRanking } from '@/services/dataService';
 
 const PlayerProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
-  // Dados mockados para demonstração
-  const jogadorMock = {
-    id: '1',
-    nome: 'João Silva',
-    tipo: 'Mensalista',
-    ativo: true,
-    criadoEm: new Date('2024-01-15')
-  };
+  const { data: jogador } = useQuery({
+    queryKey: ['jogador', id],
+    queryFn: () => jogadorService.getById(id!),
+    enabled: !!id,
+  });
+
+  const { data: peladas = [] } = useQuery({
+    queryKey: ['peladas'],
+    queryFn: peladaService.getAll,
+  });
+
+  const { data: temporadas = [] } = useQuery({
+    queryKey: ['temporadas'],
+    queryFn: temporadaService.getAll,
+  });
+
+  const { data: rankingGeral = [] } = useQuery({
+    queryKey: ['ranking-geral'],
+    queryFn: () => calcularRanking(),
+  });
+
+  if (!jogador) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Jogador não encontrado</p>
+      </div>
+    );
+  }
+
+  // Calcular estatísticas do jogador
+  const estatisticasJogador = rankingGeral.find(r => r.jogador.id === jogador.id);
+  
+  // Calcular histórico por temporadas
+  const historicoTemporadas = temporadas.map(temporada => {
+    const rankingTemporada = calcularRanking(temporada.id);
+    const posicaoJogador = rankingTemporada.find(r => r.jogador.id === jogador.id);
+    
+    return {
+      temporada: temporada.nome,
+      temporadaId: temporada.id,
+      posicao: posicaoJogador?.posicao || 0,
+      pontos: posicaoJogador?.pontuacaoTotal || 0,
+      presencas: posicaoJogador?.presencas || 0,
+      gols: posicaoJogador?.gols || 0,
+      assistencias: posicaoJogador?.assistencias || 0
+    };
+  }).filter(h => h.presencas > 0);
+
+  // Calcular últimas peladas do jogador
+  const ultimasPeladas = peladas
+    .filter(pelada => pelada.presencas?.some(p => p.jogadorId === jogador.id && p.presente))
+    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+    .slice(0, 5)
+    .map(pelada => {
+      const temporada = temporadas.find(t => t.id === pelada.temporadaId);
+      let gols = 0;
+      let assistencias = 0;
+      let pontos = 1; // Ponto por presença
+      
+      // Contar gols e assistências
+      pelada.partidas?.forEach(partida => {
+        const jogadorNoTimeA = partida.timeA?.includes(jogador.id);
+        const jogadorNoTimeB = partida.timeB?.includes(jogador.id);
+        
+        if (jogadorNoTimeA || jogadorNoTimeB) {
+          // Calcular pontos da partida
+          if (partida.golsTimeA > partida.golsTimeB) {
+            pontos += jogadorNoTimeA ? (temporada?.pontosVitoria || 3) : (temporada?.pontosDerrota || 0);
+          } else if (partida.golsTimeB > partida.golsTimeA) {
+            pontos += jogadorNoTimeB ? (temporada?.pontosVitoria || 3) : (temporada?.pontosDerrota || 0);
+          } else {
+            pontos += temporada?.pontosEmpate || 1;
+          }
+        }
+        
+        partida.eventos?.forEach(evento => {
+          if (evento.jogadorId === jogador.id && evento.tipo === 'gol') {
+            gols++;
+          }
+          if (evento.assistidoPor === jogador.id) {
+            assistencias++;
+          }
+        });
+      });
+      
+      return {
+        id: pelada.id,
+        data: new Date(pelada.data),
+        temporada: temporada?.nome || 'N/A',
+        pontos: Number(pontos.toFixed(1)),
+        status: 'Presente',
+        gols,
+        assistencias
+      };
+    });
 
   const estatisticasGerais = {
-    totalPontos: 450,
-    totalPresencas: 20,
-    totalGols: 28,
-    totalAssistencias: 15,
-    mediaPresenca: 90,
-    temporadasParticipadas: 3
+    totalPontos: estatisticasJogador?.pontuacaoTotal || 0,
+    totalPresencas: estatisticasJogador?.presencas || 0,
+    totalGols: estatisticasJogador?.gols || 0,
+    totalAssistencias: estatisticasJogador?.assistencias || 0,
+    mediaPresenca: ultimasPeladas.length > 0 ? Math.round((ultimasPeladas.length / peladas.length) * 100) : 0,
+    temporadasParticipadas: historicoTemporadas.length
   };
-
-  const historicoTemporadas = [
-    {
-      temporada: '2024.1',
-      posicao: 1,
-      pontos: 180,
-      presencas: 8,
-      gols: 12,
-      assistencias: 6
-    },
-    {
-      temporada: '2023.2',
-      posicao: 3,
-      pontos: 145,
-      presencas: 7,
-      gols: 9,
-      assistencias: 5
-    },
-    {
-      temporada: '2023.1',
-      posicao: 2,
-      pontos: 125,
-      presencas: 5,
-      gols: 7,
-      assistencias: 4
-    }
-  ];
-
-  const ultimasPeladas = [
-    {
-      id: '1',
-      data: new Date('2024-03-15'),
-      temporada: '2024.1',
-      pontos: 4.5,
-      status: 'Presente',
-      gols: 2,
-      assistencias: 1
-    },
-    {
-      id: '2',
-      data: new Date('2024-03-08'),
-      temporada: '2024.1',
-      pontos: 3.0,
-      status: 'Presente',
-      gols: 1,
-      assistencias: 0
-    },
-    {
-      id: '3',
-      data: new Date('2024-03-01'),
-      temporada: '2024.1',
-      pontos: 1.0,
-      status: 'Presente',
-      gols: 0,
-      assistencias: 1
-    }
-  ];
 
   return (
     <div className="space-y-6">
@@ -97,17 +129,17 @@ const PlayerProfile: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
             <User className="h-8 w-8 text-primary" />
-            <span>{jogadorMock.nome}</span>
+            <span>{jogador.nome}</span>
           </h1>
           <div className="flex items-center space-x-2 mt-1">
-            <Badge variant={jogadorMock.tipo === 'Mensalista' ? 'default' : 'secondary'}>
-              {jogadorMock.tipo}
+            <Badge variant={jogador.tipo === 'Mensalista' ? 'default' : 'secondary'}>
+              {jogador.tipo}
             </Badge>
-            <Badge variant={jogadorMock.ativo ? 'default' : 'destructive'}>
-              {jogadorMock.ativo ? 'Ativo' : 'Inativo'}
+            <Badge variant={jogador.ativo ? 'default' : 'destructive'}>
+              {jogador.ativo ? 'Ativo' : 'Inativo'}
             </Badge>
             <span className="text-muted-foreground">
-              • Membro desde {jogadorMock.criadoEm.toLocaleDateString('pt-BR')}
+              • Membro desde {new Date(jogador.criadoEm).toLocaleDateString('pt-BR')}
             </span>
           </div>
         </div>
@@ -172,38 +204,44 @@ const PlayerProfile: React.FC = () => {
             <CardDescription>Performance em cada temporada participada</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Temporada</TableHead>
-                  <TableHead className="text-center">Pos.</TableHead>
-                  <TableHead className="text-center">Pontos</TableHead>
-                  <TableHead className="text-center">Gols</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historicoTemporadas.map((temporada, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Link to={`/temporada/${index + 1}`} className="hover:underline">
-                        {temporada.temporada}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={temporada.posicao <= 3 ? 'default' : 'secondary'}>
-                        {temporada.posicao}º
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center font-medium">
-                      {temporada.pontos}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {temporada.gols}
-                    </TableCell>
+            {historicoTemporadas.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Temporada</TableHead>
+                    <TableHead className="text-center">Pos.</TableHead>
+                    <TableHead className="text-center">Pontos</TableHead>
+                    <TableHead className="text-center">Gols</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {historicoTemporadas.map((temporada, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Link to={`/temporada/${temporada.temporadaId}`} className="hover:underline">
+                          {temporada.temporada}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={temporada.posicao <= 3 ? 'default' : 'secondary'}>
+                          {temporada.posicao}º
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-medium">
+                        {temporada.pontos}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {temporada.gols}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">
+                Nenhuma participação em temporadas registrada
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -217,19 +255,19 @@ const PlayerProfile: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Média de Pontos por Pelada:</span>
               <span className="text-sm font-medium">
-                {(estatisticasGerais.totalPontos / estatisticasGerais.totalPresencas).toFixed(1)}
+                {estatisticasGerais.totalPresencas > 0 ? (estatisticasGerais.totalPontos / estatisticasGerais.totalPresencas).toFixed(1) : '0.0'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Média de Gols por Pelada:</span>
               <span className="text-sm font-medium">
-                {(estatisticasGerais.totalGols / estatisticasGerais.totalPresencas).toFixed(1)}
+                {estatisticasGerais.totalPresencas > 0 ? (estatisticasGerais.totalGols / estatisticasGerais.totalPresencas).toFixed(1) : '0.0'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Média de Assistências:</span>
               <span className="text-sm font-medium">
-                {(estatisticasGerais.totalAssistencias / estatisticasGerais.totalPresencas).toFixed(1)}
+                {estatisticasGerais.totalPresencas > 0 ? (estatisticasGerais.totalAssistencias / estatisticasGerais.totalPresencas).toFixed(1) : '0.0'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -251,55 +289,61 @@ const PlayerProfile: React.FC = () => {
           <CardDescription>Performance nas peladas mais recentes</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Temporada</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Pontos</TableHead>
-                <TableHead className="text-center">Gols</TableHead>
-                <TableHead className="text-center">Assistências</TableHead>
-                <TableHead className="text-center">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ultimasPeladas.map((pelada) => (
-                <TableRow key={pelada.id}>
-                  <TableCell>
-                    {pelada.data.toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell>
-                    <Link to={`/temporada/1`} className="hover:underline">
-                      {pelada.temporada}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="default">
-                      {pelada.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {pelada.pontos}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {pelada.gols}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {pelada.assistencias}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Link to={`/pelada/${pelada.id}`}>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Ver
-                      </Button>
-                    </Link>
-                  </TableCell>
+          {ultimasPeladas.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Temporada</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Pontos</TableHead>
+                  <TableHead className="text-center">Gols</TableHead>
+                  <TableHead className="text-center">Assistências</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {ultimasPeladas.map((pelada) => (
+                  <TableRow key={pelada.id}>
+                    <TableCell>
+                      {pelada.data.toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell>
+                      {pelada.temporada}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="default">
+                        {pelada.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      {pelada.pontos}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {pelada.gols}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {pelada.assistencias}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Link to={`/pelada/${pelada.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Ver
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium text-muted-foreground">Nenhuma pelada registrada</p>
+              <p className="text-sm text-muted-foreground">As peladas aparecerão aqui quando o jogador participar</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
