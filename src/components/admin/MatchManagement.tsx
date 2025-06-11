@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, Target, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { Play, Target, Plus, Trash2, ArrowRight, Trophy, Users } from 'lucide-react';
 import { TimeNaPelada, Partida, Jogador } from '@/types';
 
 interface JogadorPresente {
@@ -108,9 +108,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
 
   if (times.length < 2) {
     return (
-      <Card>
+      <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
         <CardContent className="text-center py-8">
-          <p className="text-muted-foreground">Forme pelo menos 2 times para registrar partidas</p>
+          <Users className="h-12 w-12 text-orange-400 mx-auto mb-4" />
+          <p className="text-muted-foreground font-medium">Forme pelo menos 2 times para registrar partidas</p>
         </CardContent>
       </Card>
     );
@@ -119,10 +120,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
   return (
     <div className="space-y-6">
       {!partidaAtual && (
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Play className="h-5 w-5" />
+            <CardTitle className="flex items-center space-x-2 text-blue-800">
+              <Play className="h-6 w-6 text-blue-600" />
               <span>Nova Partida</span>
             </CardTitle>
             <CardDescription>Selecione os times que irão se enfrentar</CardDescription>
@@ -130,15 +131,15 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
-                <Label>Time A</Label>
+                <Label className="text-blue-700 font-medium">Time A</Label>
                 <Select value={timeASelecionado} onValueChange={setTimeASelecionado}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-blue-200 focus:border-blue-400">
                     <SelectValue placeholder="Selecione o time A" />
                   </SelectTrigger>
                   <SelectContent>
                     {times.map((time) => (
                       <SelectItem key={time.id} value={time.id}>
-                        Time {time.identificadorLetra}
+                        Time {time.identificadorLetra} ({time.jogadores.length} jogadores)
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -146,22 +147,27 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
               </div>
 
               <div>
-                <Label>Time B</Label>
+                <Label className="text-blue-700 font-medium">Time B</Label>
                 <Select value={timeBSelecionado} onValueChange={setTimeBSelecionado}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-blue-200 focus:border-blue-400">
                     <SelectValue placeholder="Selecione o time B" />
                   </SelectTrigger>
                   <SelectContent>
                     {times.filter(t => t.id !== timeASelecionado).map((time) => (
                       <SelectItem key={time.id} value={time.id}>
-                        Time {time.identificadorLetra}
+                        Time {time.identificadorLetra} ({time.jogadores.length} jogadores)
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <Button onClick={handleCriarPartida} disabled={!timeASelecionado || !timeBSelecionado}>
+              <Button 
+                onClick={handleCriarPartida} 
+                disabled={!timeASelecionado || !timeBSelecionado}
+                className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+              >
+                <Play className="h-4 w-4 mr-2" />
                 Iniciar Partida
               </Button>
             </div>
@@ -170,92 +176,104 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
       )}
 
       {partidaAtual && (
-        <Card>
+        <Card className="bg-gradient-to-br from-green-50 to-yellow-50 border-green-200">
           <CardHeader>
-            <CardTitle className="text-center text-2xl">
+            <CardTitle className="text-center text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
               Time {getTimeLetra(partidaAtual.timeAId)} {placarA} x {placarB} Time {getTimeLetra(partidaAtual.timeBId)}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Controle de Placar */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center space-y-2">
-                <Label>Time {getTimeLetra(partidaAtual.timeAId)}</Label>
-                <div className="flex items-center justify-center space-x-2">
-                  <Button variant="outline" onClick={() => setPlacarA(Math.max(0, placarA - 1))}>-</Button>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center space-y-3 bg-white p-4 rounded-lg border shadow-sm">
+                <Label className="text-lg font-semibold text-green-700">Time {getTimeLetra(partidaAtual.timeAId)}</Label>
+                <div className="flex items-center justify-center space-x-3">
+                  <Button variant="outline" size="lg" onClick={() => setPlacarA(Math.max(0, placarA - 1))} className="border-green-300 hover:bg-green-50">-</Button>
                   <Input 
                     type="number" 
                     value={placarA} 
                     onChange={(e) => setPlacarA(Number(e.target.value))}
-                    className="w-20 text-center"
+                    className="w-24 text-center text-2xl font-bold border-green-300"
                   />
-                  <Button variant="outline" onClick={() => setPlacarA(placarA + 1)}>+</Button>
+                  <Button variant="outline" size="lg" onClick={() => setPlacarA(placarA + 1)} className="border-green-300 hover:bg-green-50">+</Button>
                 </div>
               </div>
               
-              <div className="text-center space-y-2">
-                <Label>Time {getTimeLetra(partidaAtual.timeBId)}</Label>
-                <div className="flex items-center justify-center space-x-2">
-                  <Button variant="outline" onClick={() => setPlacarB(Math.max(0, placarB - 1))}>-</Button>
+              <div className="text-center space-y-3 bg-white p-4 rounded-lg border shadow-sm">
+                <Label className="text-lg font-semibold text-blue-700">Time {getTimeLetra(partidaAtual.timeBId)}</Label>
+                <div className="flex items-center justify-center space-x-3">
+                  <Button variant="outline" size="lg" onClick={() => setPlacarB(Math.max(0, placarB - 1))} className="border-blue-300 hover:bg-blue-50">-</Button>
                   <Input 
                     type="number" 
                     value={placarB} 
                     onChange={(e) => setPlacarB(Number(e.target.value))}
-                    className="w-20 text-center"
+                    className="w-24 text-center text-2xl font-bold border-blue-300"
                   />
-                  <Button variant="outline" onClick={() => setPlacarB(placarB + 1)}>+</Button>
+                  <Button variant="outline" size="lg" onClick={() => setPlacarB(placarB + 1)} className="border-blue-300 hover:bg-blue-50">+</Button>
                 </div>
               </div>
             </div>
 
             {/* Adicionar Eventos */}
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold mb-4">Registrar Eventos</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div>
-                  <Label>Tipo de Evento</Label>
-                  <Select value={tipoEvento} onValueChange={setTipoEvento}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gol">Gol</SelectItem>
-                      <SelectItem value="cartao_amarelo">Cartão Amarelo</SelectItem>
-                      <SelectItem value="cartao_azul">Cartão Azul</SelectItem>
-                      <SelectItem value="cartao_vermelho">Cartão Vermelho</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center text-purple-700">
+                <Target className="h-5 w-5 mr-2" />
+                Registrar Eventos
+              </h3>
+              <div className="bg-white p-4 rounded-lg border shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div>
+                    <Label className="text-purple-700 font-medium">Tipo de Evento</Label>
+                    <Select value={tipoEvento} onValueChange={setTipoEvento}>
+                      <SelectTrigger className="border-purple-200 focus:border-purple-400">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gol">⚽ Gol</SelectItem>
+                        <SelectItem value="cartao_amarelo">🟨 Cartão Amarelo</SelectItem>
+                        <SelectItem value="cartao_azul">🟦 Cartão Azul</SelectItem>
+                        <SelectItem value="cartao_vermelho">🟥 Cartão Vermelho</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label>Jogador</Label>
-                  <Select value={jogadorEvento} onValueChange={setJogadorEvento}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o jogador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jogadoresPartidaAtual.map((jogador) => (
-                        <SelectItem key={jogador.id} value={jogador.id}>
-                          {jogador.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div>
+                    <Label className="text-purple-700 font-medium">Jogador</Label>
+                    <Select value={jogadorEvento} onValueChange={setJogadorEvento}>
+                      <SelectTrigger className="border-purple-200 focus:border-purple-400">
+                        <SelectValue placeholder="Selecione o jogador" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {jogadoresPartidaAtual.map((jogador) => (
+                          <SelectItem key={jogador.id} value={jogador.id}>
+                            {jogador.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="md:col-span-2">
-                  <Button onClick={handleAdicionarEvento} disabled={!jogadorEvento}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Evento
-                  </Button>
+                  <div className="md:col-span-2">
+                    <Button 
+                      onClick={handleAdicionarEvento} 
+                      disabled={!jogadorEvento}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Evento
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Lista de Eventos */}
             {eventos.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Eventos da Partida</h3>
+              <div className="bg-white p-4 rounded-lg border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-orange-700">
+                  <Trophy className="h-5 w-5 mr-2" />
+                  Eventos da Partida
+                </h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -268,17 +286,22 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                     {eventos.map((evento) => (
                       <TableRow key={evento.id}>
                         <TableCell>
-                          <Badge variant={evento.tipo === 'gol' ? 'default' : 'secondary'}>
+                          <Badge variant={evento.tipo === 'gol' ? 'default' : 'secondary'} className="text-sm">
                             {evento.tipo === 'gol' && <Target className="h-3 w-3 mr-1" />}
-                            {evento.tipo.replace('_', ' ').toUpperCase()}
+                            {evento.tipo === 'gol' && '⚽'}
+                            {evento.tipo === 'cartao_amarelo' && '🟨'}
+                            {evento.tipo === 'cartao_azul' && '🟦'}
+                            {evento.tipo === 'cartao_vermelho' && '🟥'}
+                            {' ' + evento.tipo.replace('_', ' ').toUpperCase()}
                           </Badge>
                         </TableCell>
-                        <TableCell>{getJogadorNome(evento.jogadorId)}</TableCell>
+                        <TableCell className="font-medium">{getJogadorNome(evento.jogadorId)}</TableCell>
                         <TableCell>
                           <Button 
                             variant="ghost" 
                             size="sm"
                             onClick={() => removerEvento(evento.id)}
+                            className="hover:bg-red-50 hover:text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -290,7 +313,12 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
               </div>
             )}
 
-            <Button onClick={finalizarPartida} className="w-full">
+            <Button 
+              onClick={finalizarPartida} 
+              className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 py-3"
+              size="lg"
+            >
+              <Trophy className="h-5 w-5 mr-2" />
               Finalizar Partida
             </Button>
           </CardContent>
@@ -299,20 +327,26 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
 
       {/* Partidas Finalizadas */}
       {partidas.length > 0 && (
-        <Card>
+        <Card className="bg-gradient-to-br from-gray-50 to-blue-50 border-gray-200">
           <CardHeader>
-            <CardTitle>Partidas Finalizadas</CardTitle>
+            <CardTitle className="flex items-center space-x-2 text-gray-800">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              <span>Partidas Finalizadas</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {partidas.map((partida) => (
-                <div key={partida.id} className="p-4 border rounded-lg">
-                  <div className="text-center text-lg font-semibold mb-2">
+              {partidas.map((partida, index) => (
+                <div key={partida.id} className="p-4 bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  <div className="text-center text-lg font-semibold mb-2 text-gray-800">
                     Time {getTimeLetra(partida.timeAId)} {partida.placarA} x {partida.placarB} Time {getTimeLetra(partida.timeBId)}
                   </div>
                   {partida.eventos && partida.eventos.length > 0 && (
-                    <div className="text-sm text-muted-foreground">
-                      <strong>Eventos:</strong> {partida.eventos.length} registrados
+                    <div className="text-sm text-muted-foreground text-center">
+                      <Badge variant="outline" className="text-xs">
+                        <Target className="h-3 w-3 mr-1" />
+                        {partida.eventos.length} eventos registrados
+                      </Badge>
                     </div>
                   )}
                 </div>
@@ -321,7 +355,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
 
             {canProceed && onNextStep && (
               <div className="mt-6 flex justify-end">
-                <Button onClick={onNextStep}>
+                <Button 
+                  onClick={onNextStep}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                >
                   Próximo: Finalizar Pelada
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>

@@ -31,6 +31,15 @@ export interface Pelada {
   temporada?: Temporada;
   partidas?: PartidaPelada[];
   presencas?: PresencaPelada[];
+  times?: TimeNaPelada[];
+  jogadoresPresentes?: JogadorPresente[];
+}
+
+export interface JogadorPresente {
+  id: string;
+  nome: string;
+  tipo: string;
+  presente: boolean;
 }
 
 export interface PartidaPelada {
@@ -41,6 +50,8 @@ export interface PartidaPelada {
   timeB: string[];
   golsTimeA: number;
   golsTimeB: number;
+  placarA: number;
+  placarB: number;
   eventos: EventoPelada[];
 }
 
@@ -77,6 +88,14 @@ export interface Partida {
   placarB: number;
   timeA?: TimeNaPelada;
   timeB?: TimeNaPelada;
+  eventos?: EventoPartida[];
+}
+
+export interface EventoPartida {
+  id: string;
+  tipo: 'gol' | 'cartao_amarelo' | 'cartao_azul' | 'cartao_vermelho';
+  jogadorId: string;
+  assistidoPor?: string;
 }
 
 export interface RegistroPeladaJogador {
