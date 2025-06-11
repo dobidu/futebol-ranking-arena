@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
-import { temporadaService, jogadorService } from '@/services/dataService';
+import { temporadaService, jogadorService, peladaService } from '@/services/dataService';
 import PeladaCreationForm from '@/components/admin/PeladaCreationForm';
 import TeamFormation from '@/components/admin/TeamFormation';
 import MatchManagement from '@/components/admin/MatchManagement';
@@ -11,6 +12,7 @@ import { usePeladaState } from '@/hooks/usePeladaState';
 import { usePeladaActions } from '@/hooks/usePeladaActions';
 
 const AdminPeladas: React.FC = () => {
+  const { id: peladaId } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('nova-pelada');
   const peladaState = usePeladaState();
   
@@ -24,29 +26,49 @@ const AdminPeladas: React.FC = () => {
     queryFn: jogadorService.getAll,
   });
 
+  // Se estamos editando uma pelada, carregue os dados
+  const { data: peladaParaEdicao } = useQuery({
+    queryKey: ['pelada-edicao', peladaId],
+    queryFn: () => peladaService.getById(peladaId!),
+    enabled: !!peladaId,
+  });
+
   const peladaActions = usePeladaActions({
     ...peladaState,
     jogadores,
     onTabChange: setActiveTab
   });
 
-  console.log('AdminPeladas - Times:', peladaState.times);
-  console.log('AdminPeladas - Partida atual:', peladaState.partidaAtual);
-  console.log('AdminPeladas - Jogadores:', jogadores);
+  const isEditMode = !!peladaId;
+  const pageTitle = isEditMode ? 'Editar Pelada' : 'Súmula Digital';
+  const pageDescription = isEditMode ? 'Edite os dados da pelada selecionada' : 'Registre peladas com múltiplos times e partidas';
+
+  // Determinar quais abas devem estar disponíveis
+  const canGoToTimes = peladaState.jogadoresPresentes.some(j => j.presente) || isEditMode;
+  const canGoToPartidas = peladaState.times.length >= 2 || isEditMode;
+  const canGoToFinalizar = peladaState.partidas.length > 0 || isEditMode;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Súmula Digital</h1>
-        <p className="text-muted-foreground">Registre peladas com múltiplos times e partidas</p>
+        <h1 className="text-3xl font-bold text-foreground">{pageTitle}</h1>
+        <p className="text-muted-foreground">{pageDescription}</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="nova-pelada">Nova Pelada</TabsTrigger>
-          <TabsTrigger value="times">Formar Times</TabsTrigger>
-          <TabsTrigger value="partidas">Partidas</TabsTrigger>
-          <TabsTrigger value="salvar">Finalizar</TabsTrigger>
+          <TabsTrigger value="nova-pelada">
+            {isEditMode ? 'Dados da Pelada' : 'Nova Pelada'}
+          </TabsTrigger>
+          <TabsTrigger value="times" disabled={!canGoToTimes}>
+            Formar Times
+          </TabsTrigger>
+          <TabsTrigger value="partidas" disabled={!canGoToPartidas}>
+            Partidas
+          </TabsTrigger>
+          <TabsTrigger value="salvar" disabled={!canGoToFinalizar}>
+            Finalizar
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="nova-pelada">
@@ -60,6 +82,9 @@ const AdminPeladas: React.FC = () => {
             jogadoresPresentes={peladaState.jogadoresPresentes}
             criarPelada={peladaActions.criarPelada}
             togglePresenca={peladaActions.togglePresenca}
+            isEditMode={isEditMode}
+            peladaParaEdicao={peladaParaEdicao}
+            onNextStep={() => setActiveTab('times')}
           />
         </TabsContent>
 
@@ -73,6 +98,7 @@ const AdminPeladas: React.FC = () => {
             criarTime={peladaActions.criarTime}
             adicionarJogadorAoTime={peladaActions.adicionarJogadorAoTime}
             removerJogadorDoTime={peladaActions.removerJogadorDoTime}
+            onNextStep={() => setActiveTab('partidas')}
           />
         </TabsContent>
 
@@ -92,6 +118,7 @@ const AdminPeladas: React.FC = () => {
             eventos={peladaState.eventos}
             adicionarEvento={peladaActions.adicionarEvento}
             removerEvento={peladaActions.removerEvento}
+            onNextStep={() => setActiveTab('salvar')}
           />
         </TabsContent>
 
@@ -102,6 +129,8 @@ const AdminPeladas: React.FC = () => {
             partidas={peladaState.partidas}
             eventos={peladaState.eventos}
             salvarPelada={peladaActions.salvarPelada}
+            isEditMode={isEditMode}
+            peladaId={peladaId}
           />
         </TabsContent>
       </Tabs>
