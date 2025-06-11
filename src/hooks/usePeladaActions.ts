@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { peladaService } from '@/services/dataService';
@@ -261,9 +260,9 @@ export const usePeladaActions = ({
       const timeDoJogador = partidaAtual.timeA?.jogadores.includes(jogadorId) ? 'A' : 'B';
       
       if (timeDoJogador === 'A') {
-        setPlacarA(prev => prev + 1);
+        setPlacarA(placarA + 1);
       } else {
-        setPlacarB(prev => prev + 1);
+        setPlacarB(placarB + 1);
       }
     }
 
