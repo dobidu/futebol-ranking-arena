@@ -1,3 +1,4 @@
+
 import { Jogador, Temporada, Pelada } from '@/types';
 
 export const mockJogadores: Jogador[] = [
@@ -62,6 +63,8 @@ export const mockPeladas: Pelada[] = [
         timeB: ['2', '4', '7', '10'],
         golsTimeA: 4,
         golsTimeB: 2,
+        placarA: 4,
+        placarB: 2,
         eventos: [
           { id: '1', partidaId: '1', jogadorId: '1', tipo: 'gol', minuto: 5, assistidoPor: '3' },
           { id: '2', partidaId: '1', jogadorId: '2', tipo: 'gol', minuto: 10 },
@@ -81,6 +84,20 @@ export const mockPeladas: Pelada[] = [
       { id: '7', peladaId: '1', jogadorId: '7', presente: true, atraso: 'nenhum' },
       { id: '9', peladaId: '1', jogadorId: '9', presente: true, atraso: 'nenhum' },
       { id: '10', peladaId: '1', jogadorId: '10', presente: true, atraso: 'nenhum' },
+    ],
+    times: [
+      { id: 't1', peladaId: '1', identificadorLetra: 'A', jogadores: ['1', '3', '6', '9'] },
+      { id: 't2', peladaId: '1', identificadorLetra: 'B', jogadores: ['2', '4', '7', '10'] },
+    ],
+    jogadoresPresentes: [
+      { id: '1', nome: 'João Silva', tipo: 'Mensalista', presente: true },
+      { id: '2', nome: 'Pedro Santos', tipo: 'Mensalista', presente: true },
+      { id: '3', nome: 'Carlos Oliveira', tipo: 'Convidado', presente: true },
+      { id: '4', nome: 'Ana Costa', tipo: 'Mensalista', presente: true },
+      { id: '6', nome: 'Rafael Mendes', tipo: 'Mensalista', presente: true },
+      { id: '7', nome: 'Lucas Ferreira', tipo: 'Mensalista', presente: true },
+      { id: '9', nome: 'Gabriel Torres', tipo: 'Mensalista', presente: true },
+      { id: '10', nome: 'Thiago Alves', tipo: 'Mensalista', presente: true },
     ]
   },
   {
@@ -96,6 +113,8 @@ export const mockPeladas: Pelada[] = [
         timeB: ['3', '4', '6', '7'],
         golsTimeA: 2,
         golsTimeB: 3,
+        placarA: 2,
+        placarB: 3,
         eventos: [
           { id: '6', partidaId: '2', jogadorId: '2', tipo: 'gol', minuto: 12, assistidoPor: '1' },
           { id: '7', partidaId: '2', jogadorId: '6', tipo: 'gol', minuto: 18 },
@@ -114,6 +133,20 @@ export const mockPeladas: Pelada[] = [
       { id: '17', peladaId: '2', jogadorId: '7', presente: true, atraso: 'nenhum' },
       { id: '18', peladaId: '2', jogadorId: '8', presente: true, atraso: 'nenhum' },
       { id: '19', peladaId: '2', jogadorId: '11', presente: true, atraso: 'nenhum' },
+    ],
+    times: [
+      { id: 't3', peladaId: '2', identificadorLetra: 'A', jogadores: ['1', '2', '8', '11'] },
+      { id: 't4', peladaId: '2', identificadorLetra: 'B', jogadores: ['3', '4', '6', '7'] },
+    ],
+    jogadoresPresentes: [
+      { id: '1', nome: 'João Silva', tipo: 'Mensalista', presente: true },
+      { id: '2', nome: 'Pedro Santos', tipo: 'Mensalista', presente: true },
+      { id: '3', nome: 'Carlos Oliveira', tipo: 'Convidado', presente: true },
+      { id: '4', nome: 'Ana Costa', tipo: 'Mensalista', presente: true },
+      { id: '6', nome: 'Rafael Mendes', tipo: 'Mensalista', presente: true },
+      { id: '7', nome: 'Lucas Ferreira', tipo: 'Mensalista', presente: true },
+      { id: '8', nome: 'Felipe Rocha', tipo: 'Convidado', presente: true },
+      { id: '11', nome: 'Ricardo Silva', tipo: 'Mensalista', presente: true },
     ]
   },
   {
@@ -129,6 +162,8 @@ export const mockPeladas: Pelada[] = [
         timeB: ['2', '3', '6', '10'],
         golsTimeA: 3,
         golsTimeB: 4,
+        placarA: 3,
+        placarB: 4,
         eventos: [
           { id: '11', partidaId: '3', jogadorId: '1', tipo: 'gol', minuto: 8 },
           { id: '12', partidaId: '3', jogadorId: '2', tipo: 'gol', minuto: 14, assistidoPor: '3' },
@@ -149,6 +184,20 @@ export const mockPeladas: Pelada[] = [
       { id: '26', peladaId: '3', jogadorId: '7', presente: true, atraso: 'nenhum' },
       { id: '27', peladaId: '3', jogadorId: '9', presente: true, atraso: 'nenhum' },
       { id: '28', peladaId: '3', jogadorId: '10', presente: true, atraso: 'nenhum' },
+    ],
+    times: [
+      { id: 't5', peladaId: '3', identificadorLetra: 'A', jogadores: ['1', '4', '7', '9'] },
+      { id: 't6', peladaId: '3', identificadorLetra: 'B', jogadores: ['2', '3', '6', '10'] },
+    ],
+    jogadoresPresentes: [
+      { id: '1', nome: 'João Silva', tipo: 'Mensalista', presente: true },
+      { id: '2', nome: 'Pedro Santos', tipo: 'Mensalista', presente: true },
+      { id: '3', nome: 'Carlos Oliveira', tipo: 'Convidado', presente: true },
+      { id: '4', nome: 'Ana Costa', tipo: 'Mensalista', presente: true },
+      { id: '6', nome: 'Rafael Mendes', tipo: 'Mensalista', presente: true },
+      { id: '7', nome: 'Lucas Ferreira', tipo: 'Mensalista', presente: true },
+      { id: '9', nome: 'Gabriel Torres', tipo: 'Mensalista', presente: true },
+      { id: '10', nome: 'Thiago Alves', tipo: 'Mensalista', presente: true },
     ]
   },
   {
@@ -164,6 +213,8 @@ export const mockPeladas: Pelada[] = [
         timeB: ['1', '3', '6', '9'],
         golsTimeA: 1,
         golsTimeB: 2,
+        placarA: 1,
+        placarB: 2,
         eventos: [
           { id: '18', partidaId: '4', jogadorId: '8', tipo: 'gol', minuto: 15, assistidoPor: '11' },
           { id: '19', partidaId: '4', jogadorId: '1', tipo: 'gol', minuto: 22 },
@@ -180,6 +231,20 @@ export const mockPeladas: Pelada[] = [
       { id: '36', peladaId: '4', jogadorId: '9', presente: true, atraso: 'nenhum' },
       { id: '37', peladaId: '4', jogadorId: '11', presente: true, atraso: 'nenhum' },
       { id: '38', peladaId: '4', jogadorId: '12', presente: true, atraso: 'nenhum' },
+    ],
+    times: [
+      { id: 't7', peladaId: '4', identificadorLetra: 'A', jogadores: ['5', '8', '11', '12'] },
+      { id: 't8', peladaId: '4', identificadorLetra: 'B', jogadores: ['1', '3', '6', '9'] },
+    ],
+    jogadoresPresentes: [
+      { id: '1', nome: 'João Silva', tipo: 'Mensalista', presente: true },
+      { id: '3', nome: 'Carlos Oliveira', tipo: 'Convidado', presente: true },
+      { id: '5', nome: 'Bruno Lima', tipo: 'Convidado', presente: true },
+      { id: '6', nome: 'Rafael Mendes', tipo: 'Mensalista', presente: true },
+      { id: '8', nome: 'Felipe Rocha', tipo: 'Convidado', presente: true },
+      { id: '9', nome: 'Gabriel Torres', tipo: 'Mensalista', presente: true },
+      { id: '11', nome: 'Ricardo Silva', tipo: 'Mensalista', presente: true },
+      { id: '12', nome: 'Eduardo Costa', tipo: 'Convidado', presente: true },
     ]
   },
   {
@@ -195,6 +260,8 @@ export const mockPeladas: Pelada[] = [
         timeB: ['1', '6', '8', '11'],
         golsTimeA: 3,
         golsTimeB: 1,
+        placarA: 3,
+        placarB: 1,
         eventos: [
           { id: '21', partidaId: '5', jogadorId: '2', tipo: 'gol', minuto: 10, assistidoPor: '4' },
           { id: '22', partidaId: '5', jogadorId: '7', tipo: 'gol', minuto: 18 },
@@ -213,6 +280,20 @@ export const mockPeladas: Pelada[] = [
       { id: '46', peladaId: '5', jogadorId: '8', presente: true, atraso: 'nenhum' },
       { id: '47', peladaId: '5', jogadorId: '10', presente: true, atraso: 'nenhum' },
       { id: '48', peladaId: '5', jogadorId: '11', presente: true, atraso: 'nenhum' },
+    ],
+    times: [
+      { id: 't9', peladaId: '5', identificadorLetra: 'A', jogadores: ['2', '4', '7', '10'] },
+      { id: 't10', peladaId: '5', identificadorLetra: 'B', jogadores: ['1', '6', '8', '11'] },
+    ],
+    jogadoresPresentes: [
+      { id: '1', nome: 'João Silva', tipo: 'Mensalista', presente: true },
+      { id: '2', nome: 'Pedro Santos', tipo: 'Mensalista', presente: true },
+      { id: '4', nome: 'Ana Costa', tipo: 'Mensalista', presente: true },
+      { id: '6', nome: 'Rafael Mendes', tipo: 'Mensalista', presente: true },
+      { id: '7', nome: 'Lucas Ferreira', tipo: 'Mensalista', presente: true },
+      { id: '8', nome: 'Felipe Rocha', tipo: 'Convidado', presente: true },
+      { id: '10', nome: 'Thiago Alves', tipo: 'Mensalista', presente: true },
+      { id: '11', nome: 'Ricardo Silva', tipo: 'Mensalista', presente: true },
     ]
   },
   {
@@ -228,6 +309,8 @@ export const mockPeladas: Pelada[] = [
         timeB: ['2', '4', '6', '7'],
         golsTimeA: 2,
         golsTimeB: 2,
+        placarA: 2,
+        placarB: 2,
         eventos: [
           { id: '26', partidaId: '6', jogadorId: '3', tipo: 'gol', minuto: 12 },
           { id: '27', partidaId: '6', jogadorId: '2', tipo: 'gol', minuto: 20, assistidoPor: '4' },
@@ -245,6 +328,20 @@ export const mockPeladas: Pelada[] = [
       { id: '56', peladaId: '6', jogadorId: '7', presente: true, atraso: 'nenhum' },
       { id: '57', peladaId: '6', jogadorId: '9', presente: true, atraso: 'nenhum' },
       { id: '58', peladaId: '6', jogadorId: '12', presente: true, atraso: 'nenhum' },
+    ],
+    times: [
+      { id: 't11', peladaId: '6', identificadorLetra: 'A', jogadores: ['3', '5', '9', '12'] },
+      { id: 't12', peladaId: '6', identificadorLetra: 'B', jogadores: ['2', '4', '6', '7'] },
+    ],
+    jogadoresPresentes: [
+      { id: '2', nome: 'Pedro Santos', tipo: 'Mensalista', presente: true },
+      { id: '3', nome: 'Carlos Oliveira', tipo: 'Convidado', presente: true },
+      { id: '4', nome: 'Ana Costa', tipo: 'Mensalista', presente: true },
+      { id: '5', nome: 'Bruno Lima', tipo: 'Convidado', presente: true },
+      { id: '6', nome: 'Rafael Mendes', tipo: 'Mensalista', presente: true },
+      { id: '7', nome: 'Lucas Ferreira', tipo: 'Mensalista', presente: true },
+      { id: '9', nome: 'Gabriel Torres', tipo: 'Mensalista', presente: true },
+      { id: '12', nome: 'Eduardo Costa', tipo: 'Convidado', presente: true },
     ]
   }
 ];

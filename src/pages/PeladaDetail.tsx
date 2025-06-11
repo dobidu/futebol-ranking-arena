@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Trophy, Users, ArrowLeft, Target, Clock, Edit } from 'lucide-react';
+import { Calendar, Trophy, Users, ArrowLeft, Target, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { peladaService, temporadaService, jogadorService } from '@/services/dataService';
@@ -30,7 +30,11 @@ const PeladaDetail: React.FC = () => {
   });
 
   if (!pelada) {
-    return <div>Pelada não encontrada</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Pelada não encontrada</p>
+      </div>
+    );
   }
 
   const getJogadorNome = (jogadorId: string) => {
@@ -49,7 +53,11 @@ const PeladaDetail: React.FC = () => {
       });
     });
 
-    return { totalGols, cartoes, jogadoresPresentes: pelada.jogadoresPresentes?.length || 0 };
+    return { 
+      totalGols, 
+      cartoes, 
+      jogadoresPresentes: pelada.jogadoresPresentes?.length || pelada.presencas?.filter(p => p.presente).length || 0 
+    };
   };
 
   const stats = calcularEstatisticas();
@@ -103,6 +111,11 @@ const PeladaDetail: React.FC = () => {
                   </div>
                 </div>
               ))}
+              {(!pelada.times || pelada.times.length === 0) && (
+                <p className="text-center text-muted-foreground py-4">
+                  Nenhum time registrado
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -115,39 +128,55 @@ const PeladaDetail: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {pelada.partidas?.map(partida => (
-                <div key={partida.id} className="border rounded-lg p-4">
-                  <div className="text-center mb-4">
-                    <div className="text-2xl font-bold">
-                      Time {partida.timeA} {partida.placarA} x {partida.placarB} Time {partida.timeB}
+              {pelada.partidas?.map((partida, index) => {
+                const timeALetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeA.includes(j)))?.identificadorLetra || 'A';
+                const timeBLetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeB.includes(j)))?.identificadorLetra || 'B';
+                
+                return (
+                  <div key={partida.id} className="border rounded-lg p-4">
+                    <div className="text-center mb-4">
+                      <div className="text-2xl font-bold">
+                        Time {timeALetra} {partida.placarA} x {partida.placarB} Time {timeBLetra}
+                      </div>
                     </div>
-                  </div>
-                  
-                  {partida.eventos && partida.eventos.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Eventos:</h4>
-                      {partida.eventos.map((evento, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center space-x-2">
-                            {evento.tipo === 'gol' && <Target className="h-4 w-4 text-green-500" />}
-                            {evento.tipo === 'cartao_amarelo' && <div className="w-4 h-4 bg-yellow-500 rounded-sm" />}
-                            {evento.tipo === 'cartao_azul' && <div className="w-4 h-4 bg-blue-500 rounded-sm" />}
-                            {evento.tipo === 'cartao_vermelho' && <div className="w-4 h-4 bg-red-500 rounded-sm" />}
-                            <span>{getJogadorNome(evento.jogadorId)}</span>
+                    
+                    {partida.eventos && partida.eventos.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm">Eventos:</h4>
+                        {partida.eventos.map((evento, eventIndex) => (
+                          <div key={eventIndex} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center space-x-2">
+                              {evento.tipo === 'gol' && <Target className="h-4 w-4 text-green-500" />}
+                              {evento.tipo === 'cartao_amarelo' && <div className="w-4 h-4 bg-yellow-500 rounded-sm" />}
+                              {evento.tipo === 'cartao_azul' && <div className="w-4 h-4 bg-blue-500 rounded-sm" />}
+                              {evento.tipo === 'cartao_vermelho' && <div className="w-4 h-4 bg-red-500 rounded-sm" />}
+                              <span>{getJogadorNome(evento.jogadorId)}</span>
+                              {evento.assistidoPor && (
+                                <span className="text-muted-foreground">
+                                  (Assistência: {getJogadorNome(evento.assistidoPor)})
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {(!pelada.partidas || pelada.partidas.length === 0) && (
+                <p className="text-center text-muted-foreground py-4">
+                  Nenhuma partida registrada
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Pontuação dos Jogadores */}
-      {pelada.jogadoresPresentes && pelada.jogadoresPresentes.length > 0 && (
+      {((pelada.jogadoresPresentes && pelada.jogadoresPresentes.length > 0) || 
+        (pelada.presencas && pelada.presencas.filter(p => p.presente).length > 0)) && (
         <Card>
           <CardHeader>
             <CardTitle>Jogadores da Pelada</CardTitle>
@@ -162,20 +191,40 @@ const PeladaDetail: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pelada.jogadoresPresentes.map((jogadorPresente, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
-                        {jogadorPresente.nome}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={jogadorPresente.presente ? 'default' : 'secondary'}>
-                        {jogadorPresente.presente ? 'Presente' : jogadorPresente.tipo}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {pelada.jogadoresPresentes ? 
+                  pelada.jogadoresPresentes.map((jogadorPresente, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
+                          {jogadorPresente.nome}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={jogadorPresente.presente ? 'default' : 'secondary'}>
+                          {jogadorPresente.presente ? 'Presente' : 'Ausente'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  )) :
+                  pelada.presencas?.filter(p => p.presente).map((presenca, index) => {
+                    const jogador = jogadores.find(j => j.id === presenca.jogadorId);
+                    return (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Link to={`/jogador/${presenca.jogadorId}`} className="hover:underline">
+                            {jogador?.nome || 'Jogador não encontrado'}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="default">
+                            Presente
+                            {presenca.atraso !== 'nenhum' && ` (${presenca.atraso})`}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                }
               </TableBody>
             </Table>
           </CardContent>

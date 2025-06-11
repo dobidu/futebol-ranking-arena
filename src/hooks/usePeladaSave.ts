@@ -75,6 +75,8 @@ export const usePeladaSave = ({
         timeB: p.timeB?.jogadores || [],
         golsTimeA: p.placarA,
         golsTimeB: p.placarB,
+        placarA: p.placarA,
+        placarB: p.placarB,
         eventos: eventos
           .filter(e => eventos.some(ev => ev.id === e.id))
           .map(e => ({
@@ -87,7 +89,8 @@ export const usePeladaSave = ({
       const peladaAtualizada = {
         ...pelada,
         partidas: partidasFormatadas,
-        presencas: presencasAtualizadas
+        presencas: presencasAtualizadas,
+        jogadoresPresentes: jogadoresPresentes.filter(j => j.presente)
       };
 
       peladaService.update(peladaAtual, peladaAtualizada);
