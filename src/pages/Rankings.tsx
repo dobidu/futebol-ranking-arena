@@ -1,12 +1,11 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Target, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { temporadaService, calcularRanking } from '@/services/dataService';
-import { RankingJogador } from '@/types';
+import RankingTable from '@/components/rankings/RankingTable';
+import SeasonSelector from '@/components/rankings/SeasonSelector';
 
 const Rankings: React.FC = () => {
   const [selectedTemporada, setSelectedTemporada] = useState<string>('');
@@ -16,7 +15,6 @@ const Rankings: React.FC = () => {
     queryFn: temporadaService.getAll,
   });
 
-  // Definir temporada padrão (ativa) se não tiver selecionada
   React.useEffect(() => {
     if (temporadas.length > 0 && !selectedTemporada) {
       const temporadaAtiva = temporadas.find(t => t.ativa);
@@ -39,75 +37,6 @@ const Rankings: React.FC = () => {
   const artilheiroData = [...rankingData].sort((a, b) => b.gols - a.gols);
   const assistenciaData = [...rankingData].sort((a, b) => b.assistencias - a.assistencias);
 
-  const RankingTable: React.FC<{ data: RankingJogador[]; type: 'geral' | 'artilharia' | 'assistencia' }> = ({ data, type }) => (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="text-left py-3 px-4 font-semibold">#</th>
-            <th className="text-left py-3 px-4 font-semibold">Jogador</th>
-            <th className="text-left py-3 px-4 font-semibold">Tipo</th>
-            {type === 'geral' && (
-              <>
-                <th className="text-left py-3 px-4 font-semibold">Pontos</th>
-                <th className="text-left py-3 px-4 font-semibold">Vitórias</th>
-                <th className="text-left py-3 px-4 font-semibold">Presenças</th>
-              </>
-            )}
-            {type === 'artilharia' && (
-              <>
-                <th className="text-left py-3 px-4 font-semibold">Gols</th>
-                <th className="text-left py-3 px-4 font-semibold">Média/Jogo</th>
-              </>
-            )}
-            {type === 'assistencia' && (
-              <>
-                <th className="text-left py-3 px-4 font-semibold">Assistências</th>
-                <th className="text-left py-3 px-4 font-semibold">Média/Jogo</th>
-              </>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item, index) => (
-            <tr key={item.jogador.id} className="border-b border-border hover:bg-accent/50 transition-colors">
-              <td className="py-3 px-4 font-medium">{index + 1}</td>
-              <td className="py-3 px-4">{item.jogador.nome}</td>
-              <td className="py-3 px-4">
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  item.jogador.tipo === 'Mensalista' 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'bg-secondary/10 text-secondary-foreground'
-                }`}>
-                  {item.jogador.tipo}
-                </span>
-              </td>
-              {type === 'geral' && (
-                <>
-                  <td className="py-3 px-4 font-semibold">{item.pontuacaoTotal}</td>
-                  <td className="py-3 px-4">{item.vitorias}</td>
-                  <td className="py-3 px-4">{item.presencas}</td>
-                </>
-              )}
-              {type === 'artilharia' && (
-                <>
-                  <td className="py-3 px-4 font-semibold">{item.gols}</td>
-                  <td className="py-3 px-4">{item.presencas > 0 ? (item.gols / item.presencas).toFixed(2) : '0.00'}</td>
-                </>
-              )}
-              {type === 'assistencia' && (
-                <>
-                  <td className="py-3 px-4 font-semibold">{item.assistencias}</td>
-                  <td className="py-3 px-4">{item.presencas > 0 ? (item.assistencias / item.presencas).toFixed(2) : '0.00'}</td>
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -116,22 +45,13 @@ const Rankings: React.FC = () => {
           <p className="text-muted-foreground">Acompanhe as classificações e estatísticas</p>
         </div>
         
-        <Select value={selectedTemporada} onValueChange={setSelectedTemporada}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Selecione a temporada" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Temporadas</SelectItem>
-            {temporadas.filter(t => t.id && t.nome).map((temporada) => (
-              <SelectItem key={temporada.id} value={temporada.id}>
-                {temporada.nome} {temporada.ativa && '(Ativa)'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SeasonSelector
+          temporadas={temporadas}
+          selectedTemporada={selectedTemporada}
+          onSelectionChange={setSelectedTemporada}
+        />
       </div>
 
-      {/* Indicador de dados carregados */}
       {rankingData.length === 0 && selectedTemporada && (
         <Card>
           <CardContent className="pt-6 text-center">

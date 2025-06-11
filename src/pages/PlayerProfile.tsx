@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,10 +40,8 @@ const PlayerProfile: React.FC = () => {
     );
   }
 
-  // Calcular estatísticas do jogador
   const estatisticasJogador = rankingGeral.find(r => r.jogador.id === jogador.id);
   
-  // Calcular histórico por temporadas
   const historicoTemporadas = temporadas.map(temporada => {
     const rankingTemporada = calcularRanking(temporada.id);
     const posicaoJogador = rankingTemporada.find(r => r.jogador.id === jogador.id);
@@ -60,7 +57,6 @@ const PlayerProfile: React.FC = () => {
     };
   }).filter(h => h.presencas > 0);
 
-  // Calcular últimas peladas do jogador
   const ultimasPeladas = peladas
     .filter(pelada => pelada.presencas?.some(p => p.jogadorId === jogador.id && p.presente))
     .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
@@ -69,15 +65,13 @@ const PlayerProfile: React.FC = () => {
       const temporada = temporadas.find(t => t.id === pelada.temporadaId);
       let gols = 0;
       let assistencias = 0;
-      let pontos = 1; // Ponto por presença
+      let pontos = 1;
       
-      // Contar gols e assistências
       pelada.partidas?.forEach(partida => {
         const jogadorNoTimeA = partida.timeA?.includes(jogador.id);
         const jogadorNoTimeB = partida.timeB?.includes(jogador.id);
         
         if (jogadorNoTimeA || jogadorNoTimeB) {
-          // Calcular pontos da partida
           if (partida.golsTimeA > partida.golsTimeB) {
             pontos += jogadorNoTimeA ? (temporada?.pontosVitoria || 3) : (temporada?.pontosDerrota || 0);
           } else if (partida.golsTimeB > partida.golsTimeA) {
