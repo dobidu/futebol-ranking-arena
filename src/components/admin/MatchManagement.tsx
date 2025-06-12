@@ -99,7 +99,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
     return time.jogadores.map(jogadorId => {
       const jogador = jogadores.find(j => j.id === jogadorId);
       return jogador ? { id: jogador.id, nome: jogador.nome } : null;
-    }).filter(Boolean);
+    }).filter((jogador): jogador is { id: string; nome: string } => jogador !== null);
   };
 
   const jogadoresPartidaAtual = partidaAtual ? [
@@ -122,7 +122,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
         const jogador = jogadores.find(j => j.id === jogadorId);
         return jogador ? { id: jogador.id, nome: jogador.nome } : null;
       })
-      .filter(Boolean);
+      .filter((jogador): jogador is { id: string; nome: string } => jogador !== null);
   };
 
   const canProceed = partidas.length > 0;
