@@ -1,6 +1,5 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
 import { peladaService } from '@/services/dataService';
 import { Jogador } from '@/types';
 
@@ -9,6 +8,13 @@ interface JogadorPresente {
   nome: string;
   tipo: string;
   presente: boolean;
+}
+
+interface EventoPartida {
+  id: string;
+  tipo: 'gol' | 'cartao_amarelo' | 'cartao_azul' | 'cartao_vermelho';
+  jogadorId: string;
+  assistidoPor?: string;
 }
 
 interface UsePeladaCreationProps {
@@ -21,7 +27,7 @@ interface UsePeladaCreationProps {
   setPartidas: (value: any[] | ((prev: any[]) => any[])) => void;
   setProximaLetra: (value: string) => void;
   setPartidaAtual: (value: any) => void;
-  setEventos: (value: any[] | ((prev: any[]) => any[])) => void;
+  setEventos: (value: EventoPartida[] | ((prev: EventoPartida[]) => EventoPartida[])) => void;
   onTabChange?: (tab: string) => void;
 }
 
@@ -39,7 +45,6 @@ export const usePeladaCreation = ({
   onTabChange
 }: UsePeladaCreationProps) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const criarPelada = async () => {
     if (!selectedTemporada || !dataPelada) {
@@ -53,15 +58,27 @@ export const usePeladaCreation = ({
 
     try {
       const novaPelada = {
+        id: crypto.randomUUID(),
         data: new Date(dataPelada),
         temporadaId: selectedTemporada,
         partidas: [],
-        presencas: []
+        presencas: [],
+        times: [],
+        jogadoresPresentes: []
       };
 
-      await peladaService.create(novaPelada);
+      peladaService.create(novaPelada);
+      setPeladaAtual(novaPelada.id);
 
-      const jogadoresComPresenca = jogadores.filter(j => j.ativo).map(jogador => ({
+      // Reset states
+      setTimes([]);
+      setPartidas([]);
+      setProximaLetra('A');
+      setPartidaAtual(null);
+      setEventos([]);
+
+      // Preparar lista de jogadores
+      const jogadoresComPresenca: JogadorPresente[] = jogadores.map(jogador => ({
         id: jogador.id,
         nome: jogador.nome,
         tipo: jogador.tipo,
@@ -69,27 +86,14 @@ export const usePeladaCreation = ({
       }));
 
       setJogadoresPresentes(jogadoresComPresenca);
-      
-      const peladas = peladaService.getAll();
-      const ultimaPelada = peladas[peladas.length - 1];
-      setPeladaAtual(ultimaPelada.id);
 
-      setTimes([]);
-      setPartidas([]);
-      setProximaLetra('A');
-      setPartidaAtual(null);
-      setEventos([]);
-
-      queryClient.invalidateQueries({ queryKey: ['peladas'] });
-      
       toast({
         title: "Sucesso",
         description: "Pelada criada com sucesso!"
       });
 
-      if (onTabChange) {
-        onTabChange('times');
-      }
+      // Remove automatic tab navigation
+      // onTabChange?.('times'); // This line was removed
     } catch (error) {
       console.error('Erro ao criar pelada:', error);
       toast({
@@ -102,8 +106,10 @@ export const usePeladaCreation = ({
 
   const togglePresenca = (jogadorId: string) => {
     setJogadoresPresentes(prev => 
-      prev.map(j => 
-        j.id === jogadorId ? { ...j, presente: !j.presente } : j
+      prev.map(jogador => 
+        jogador.id === jogadorId 
+          ? { ...jogador, presente: !jogador.presente }
+          : jogador
       )
     );
   };

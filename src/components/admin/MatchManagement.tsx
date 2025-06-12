@@ -63,6 +63,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
   const [timeBSelecionado, setTimeBSelecionado] = useState('');
   const [tipoEvento, setTipoEvento] = useState<string>('gol');
   const [jogadorEvento, setJogadorEvento] = useState('');
+  const [assistenciaEvento, setAssistenciaEvento] = useState('');
 
   const getJogadorNome = (jogadorId: string) => {
     const jogador = jogadores.find(j => j.id === jogadorId);
@@ -84,8 +85,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
 
   const handleAdicionarEvento = () => {
     if (jogadorEvento && tipoEvento) {
-      adicionarEvento(tipoEvento, jogadorEvento);
+      const assistencia = tipoEvento === 'gol' && assistenciaEvento ? assistenciaEvento : undefined;
+      adicionarEvento(tipoEvento, jogadorEvento, assistencia);
       setJogadorEvento('');
+      setAssistenciaEvento('');
     }
   };
 
@@ -103,6 +106,24 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
     ...getJogadoresDoTime(partidaAtual.timeAId),
     ...getJogadoresDoTime(partidaAtual.timeBId)
   ] : [];
+
+  // Obter jogadores do mesmo time do autor do gol para assistência
+  const getJogadoresDoMesmoTime = () => {
+    if (!partidaAtual || !jogadorEvento || tipoEvento !== 'gol') return [];
+    
+    const timeDoJogador = partidaAtual.timeA?.jogadores.includes(jogadorEvento) ? 
+      partidaAtual.timeA : partidaAtual.timeB;
+    
+    if (!timeDoJogador) return [];
+    
+    return timeDoJogador.jogadores
+      .filter(id => id !== jogadorEvento) // Não incluir o próprio autor do gol
+      .map(jogadorId => {
+        const jogador = jogadores.find(j => j.id === jogadorId);
+        return jogador ? { id: jogador.id, nome: jogador.nome } : null;
+      })
+      .filter(Boolean);
+  };
 
   const canProceed = partidas.length > 0;
 
@@ -221,10 +242,13 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                 Registrar Eventos
               </h3>
               <div className="bg-white p-4 rounded-lg border shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                   <div>
                     <Label className="text-purple-700 font-medium">Tipo de Evento</Label>
-                    <Select value={tipoEvento} onValueChange={setTipoEvento}>
+                    <Select value={tipoEvento} onValueChange={(value) => {
+                      setTipoEvento(value);
+                      setAssistenciaEvento(''); // Reset assistência quando mudar tipo
+                    }}>
                       <SelectTrigger className="border-purple-200 focus:border-purple-400">
                         <SelectValue />
                       </SelectTrigger>
@@ -239,7 +263,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
 
                   <div>
                     <Label className="text-purple-700 font-medium">Jogador</Label>
-                    <Select value={jogadorEvento} onValueChange={setJogadorEvento}>
+                    <Select value={jogadorEvento} onValueChange={(value) => {
+                      setJogadorEvento(value);
+                      setAssistenciaEvento(''); // Reset assistência quando mudar jogador
+                    }}>
                       <SelectTrigger className="border-purple-200 focus:border-purple-400">
                         <SelectValue placeholder="Selecione o jogador" />
                       </SelectTrigger>
@@ -253,7 +280,27 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                     </Select>
                   </div>
 
-                  <div className="md:col-span-2">
+                  {/* Campo de assistência apenas para gols */}
+                  {tipoEvento === 'gol' && (
+                    <div>
+                      <Label className="text-purple-700 font-medium">Assistência (opcional)</Label>
+                      <Select value={assistenciaEvento} onValueChange={setAssistenciaEvento}>
+                        <SelectTrigger className="border-purple-200 focus:border-purple-400">
+                          <SelectValue placeholder="Selecione a assistência" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Sem assistência</SelectItem>
+                          {getJogadoresDoMesmoTime().map((jogador) => (
+                            <SelectItem key={jogador.id} value={jogador.id}>
+                              {jogador.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className={tipoEvento === 'gol' ? "lg:col-span-1" : "lg:col-span-2"}>
                     <Button 
                       onClick={handleAdicionarEvento} 
                       disabled={!jogadorEvento}
@@ -279,6 +326,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                     <TableRow>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Jogador</TableHead>
+                      <TableHead>Assistência</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -296,6 +344,9 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">{getJogadorNome(evento.jogadorId)}</TableCell>
+                        <TableCell>
+                          {evento.assistidoPor ? getJogadorNome(evento.assistidoPor) : '-'}
+                        </TableCell>
                         <TableCell>
                           <Button 
                             variant="ghost" 

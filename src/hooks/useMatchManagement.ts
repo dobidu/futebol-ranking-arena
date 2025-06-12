@@ -62,6 +62,20 @@ export const useMatchManagement = ({
       return;
     }
 
+    // Verificar se há jogadores em comum entre os times
+    const jogadoresComuns = timeA.jogadores.filter(jogadorId => 
+      timeB.jogadores.includes(jogadorId)
+    );
+
+    if (jogadoresComuns.length > 0) {
+      toast({
+        title: "Erro",
+        description: "Os times não podem ter jogadores em comum para uma partida",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const novaPartida: Partida = {
       id: crypto.randomUUID(),
       peladaId: peladaAtual,

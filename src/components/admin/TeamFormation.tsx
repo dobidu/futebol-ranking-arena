@@ -65,7 +65,7 @@ const TeamFormation: React.FC<TeamFormationProps> = ({
             <span>Formação de Times</span>
           </CardTitle>
           <CardDescription>
-            Organize os jogadores presentes em times para as partidas
+            Organize os jogadores presentes em times para as partidas. Jogadores podem estar em múltiplos times.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -125,13 +125,11 @@ const TeamFormation: React.FC<TeamFormationProps> = ({
                         <SelectValue placeholder="+ Adicionar jogador" />
                       </SelectTrigger>
                       <SelectContent>
-                        {jogadoresPresentesDisponiveis
-                          .filter(j => !times.some(t => t.jogadores.includes(j.id)))
-                          .map((jogador) => (
-                            <SelectItem key={jogador.id} value={jogador.id}>
-                              {jogador.nome}
-                            </SelectItem>
-                          ))}
+                        {jogadoresPresentesDisponiveis.map((jogador) => (
+                          <SelectItem key={jogador.id} value={jogador.id}>
+                            {jogador.nome}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -153,16 +151,14 @@ const TeamFormation: React.FC<TeamFormationProps> = ({
               <CardContent className="pt-4">
                 <h4 className="font-medium text-blue-800 mb-2 flex items-center">
                   <Users className="h-4 w-4 mr-2" />
-                  Jogadores Disponíveis ({jogadoresPresentesDisponiveis.filter(j => !times.some(t => t.jogadores.includes(j.id))).length})
+                  Jogadores Disponíveis ({jogadoresPresentesDisponiveis.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {jogadoresPresentesDisponiveis
-                    .filter(j => !times.some(t => t.jogadores.includes(j.id)))
-                    .map((jogador) => (
-                      <Badge key={jogador.id} variant="outline" className="text-sm px-3 py-1">
-                        {jogador.nome}
-                      </Badge>
-                    ))}
+                  {jogadoresPresentesDisponiveis.map((jogador) => (
+                    <Badge key={jogador.id} variant="outline" className="text-sm px-3 py-1">
+                      {jogador.nome}
+                    </Badge>
+                  ))}
                 </div>
               </CardContent>
             </Card>
