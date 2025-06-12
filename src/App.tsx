@@ -1,8 +1,10 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import Layout from '@/components/shared/Layout';
+import LoginModal from '@/components/auth/LoginModal';
 
 // Pages
 import Index from '@/pages/Index';
@@ -24,10 +26,35 @@ import './App.css';
 const queryClient = new QueryClient();
 
 function App() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleLogin = (username: string, password: string) => {
+    // Simple authentication check
+    if (username === 'admin' && password === 'admin') {
+      setIsAdmin(true);
+      setShowLoginModal(false);
+      return true;
+    }
+    return false;
+  };
+
+  const handleLogout = () => {
+    setIsAdmin(false);
+  };
+
+  const handleOpenLogin = () => {
+    setShowLoginModal(true);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <Layout>
+        <Layout 
+          isAdmin={isAdmin} 
+          onLogin={handleOpenLogin} 
+          onLogout={handleLogout}
+        >
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/rankings" element={<Rankings />} />
@@ -45,6 +72,11 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
+        <LoginModal 
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          onLogin={handleLogin}
+        />
         <Toaster />
       </Router>
     </QueryClientProvider>
