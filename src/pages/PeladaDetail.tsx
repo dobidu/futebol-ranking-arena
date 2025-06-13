@@ -49,7 +49,8 @@ const PeladaDetail: React.FC = () => {
     let totalPartidas = pelada.partidas?.length || 0;
     
     pelada.partidas?.forEach(partida => {
-      totalGols += partida.placarA + partida.placarB;
+      // Corrigir o acesso aos gols - usar placarA e placarB
+      totalGols += (partida.placarA || 0) + (partida.placarB || 0);
       partida.eventos?.forEach(evento => {
         if (evento.tipo !== 'gol') cartoes++;
       });

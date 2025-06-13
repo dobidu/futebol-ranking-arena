@@ -46,7 +46,8 @@ const SeasonDetail: React.FC = () => {
       if (pelada.partidas) {
         totalPartidas += pelada.partidas.length;
         pelada.partidas.forEach(partida => {
-          totalGols += partida.placarA + partida.placarB;
+          // Usar placarA e placarB que são os campos corretos
+          totalGols += (partida.placarA || 0) + (partida.placarB || 0);
         });
       }
     });
@@ -111,10 +112,14 @@ const SeasonDetail: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {peladasTemporada.map(pelada => {
+              // Calcular estatísticas corrigidas para cada pelada
               const stats = {
-                jogadores: pelada.jogadoresPresentes?.length || pelada.presencas?.filter(p => p.presente).length || 0,
+                jogadores: pelada.jogadoresPresentes?.length || 
+                          pelada.presencas?.filter(p => p.presente).length || 0,
                 partidas: pelada.partidas?.length || 0,
-                gols: pelada.partidas?.reduce((total, partida) => total + partida.placarA + partida.placarB, 0) || 0
+                gols: pelada.partidas?.reduce((total, partida) => {
+                  return total + (partida.placarA || 0) + (partida.placarB || 0);
+                }, 0) || 0
               };
 
               const linkTo = isAdminRoute ? `/admin/pelada/${pelada.id}` : `/pelada/${pelada.id}`;
