@@ -24,6 +24,7 @@ interface UsePeladaSaveProps {
   partidas: Partida[];
   eventos: EventoPartida[];
   resetStates: () => void;
+  onTabChange?: (tab: string) => void;
 }
 
 export const usePeladaSave = ({
@@ -31,7 +32,8 @@ export const usePeladaSave = ({
   jogadoresPresentes,
   partidas,
   eventos,
-  resetStates
+  resetStates,
+  onTabChange
 }: UsePeladaSaveProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -102,9 +104,14 @@ export const usePeladaSave = ({
 
       resetStates();
 
+      // Navegar automaticamente para a aba "nova-pelada"
+      if (onTabChange) {
+        onTabChange('nova-pelada');
+      }
+
       toast({
         title: "Sucesso",
-        description: "Pelada salva com sucesso!"
+        description: "Pelada salva com sucesso! Você pode criar uma nova pelada."
       });
     } catch (error) {
       console.error('Erro ao salvar pelada:', error);

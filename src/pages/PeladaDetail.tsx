@@ -1,16 +1,18 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, Trophy, Users, ArrowLeft, Target, Edit } from 'lucide-react';
+import { Calendar, Trophy, Users, ArrowLeft, Target, Edit, Clock, Award, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { peladaService, temporadaService, jogadorService } from '@/services/dataService';
 
 const PeladaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.includes('/admin/');
 
   const { data: pelada } = useQuery({
     queryKey: ['pelada', id],
@@ -45,6 +47,7 @@ const PeladaDetail: React.FC = () => {
   const calcularEstatisticas = () => {
     let totalGols = 0;
     let cartoes = 0;
+    let totalPartidas = pelada.partidas?.length || 0;
     
     pelada.partidas?.forEach(partida => {
       totalGols += partida.placarA + partida.placarB;
@@ -56,16 +59,55 @@ const PeladaDetail: React.FC = () => {
     return { 
       totalGols, 
       cartoes, 
+      totalPartidas,
       jogadoresPresentes: pelada.jogadoresPresentes?.length || pelada.presencas?.filter(p => p.presente).length || 0 
     };
   };
 
   const stats = calcularEstatisticas();
 
+  const getEventoIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'gol':
+        return <Target className="h-4 w-4 text-green-600" />;
+      case 'cartao_amarelo':
+        return <div className="w-4 h-4 bg-yellow-500 rounded-sm flex items-center justify-center">
+          <Shield className="h-2 w-2 text-white" />
+        </div>;
+      case 'cartao_azul':
+        return <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
+          <Shield className="h-2 w-2 text-white" />
+        </div>;
+      case 'cartao_vermelho':
+        return <div className="w-4 h-4 bg-red-500 rounded-sm flex items-center justify-center">
+          <Shield className="h-2 w-2 text-white" />
+        </div>;
+      default:
+        return null;
+    }
+  };
+
+  const getEventoTexto = (tipo: string) => {
+    switch (tipo) {
+      case 'gol':
+        return 'Gol';
+      case 'cartao_amarelo':
+        return 'Cartão Amarelo';
+      case 'cartao_azul':
+        return 'Cartão Azul';
+      case 'cartao_vermelho':
+        return 'Cartão Vermelho';
+      default:
+        return tipo;
+    }
+  };
+
+  const backUrl = isAdminRoute ? `/admin/temporadas/${pelada.temporadaId}` : `/temporada/${pelada.temporadaId}`;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
-        <Link to={`/temporada/${pelada.temporadaId}`}>
+        <Link to={backUrl}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
@@ -77,162 +119,45 @@ const PeladaDetail: React.FC = () => {
             <span>Pelada - {new Date(pelada.data).toLocaleDateString('pt-BR')}</span>
           </h1>
           <p className="text-muted-foreground">
-            Temporada {temporada?.nome}
+            Temporada {temporada?.nome} • {stats.totalPartidas} partida{stats.totalPartidas !== 1 ? 's' : ''} realizada{stats.totalPartidas !== 1 ? 's' : ''}
           </p>
         </div>
-        <Link to={`/admin/peladas/editar/${pelada.id}`}>
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
-          </Button>
-        </Link>
+        {isAdminRoute && (
+          <Link to={`/admin/peladas/editar/${pelada.id}`}>
+            <Button variant="outline" size="sm">
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+          </Link>
+        )}
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Times */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Times da Pelada</CardTitle>
-            <CardDescription>Composição dos times</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pelada.times?.map(time => (
-                <div key={time.id} className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-2 flex items-center space-x-2">
-                    <Badge variant="outline">Time {time.identificadorLetra}</Badge>
-                  </h3>
-                  <div className="space-y-1">
-                    {time.jogadores.map((jogadorId, index) => (
-                      <div key={index} className="text-sm text-muted-foreground">
-                        • {getJogadorNome(jogadorId)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {(!pelada.times || pelada.times.length === 0) && (
-                <p className="text-center text-muted-foreground py-4">
-                  Nenhum time registrado
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Partidas e Resultados */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Partidas e Resultados</CardTitle>
-            <CardDescription>Jogos realizados na pelada</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pelada.partidas?.map((partida, index) => {
-                const timeALetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeA.includes(j)))?.identificadorLetra || 'A';
-                const timeBLetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeB.includes(j)))?.identificadorLetra || 'B';
-                
-                return (
-                  <div key={partida.id} className="border rounded-lg p-4">
-                    <div className="text-center mb-4">
-                      <div className="text-2xl font-bold">
-                        Time {timeALetra} {partida.placarA} x {partida.placarB} Time {timeBLetra}
-                      </div>
-                    </div>
-                    
-                    {partida.eventos && partida.eventos.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-sm">Eventos:</h4>
-                        {partida.eventos.map((evento, eventIndex) => (
-                          <div key={eventIndex} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center space-x-2">
-                              {evento.tipo === 'gol' && <Target className="h-4 w-4 text-green-500" />}
-                              {evento.tipo === 'cartao_amarelo' && <div className="w-4 h-4 bg-yellow-500 rounded-sm" />}
-                              {evento.tipo === 'cartao_azul' && <div className="w-4 h-4 bg-blue-500 rounded-sm" />}
-                              {evento.tipo === 'cartao_vermelho' && <div className="w-4 h-4 bg-red-500 rounded-sm" />}
-                              <span>{getJogadorNome(evento.jogadorId)}</span>
-                              {evento.assistidoPor && (
-                                <span className="text-muted-foreground">
-                                  (Assistência: {getJogadorNome(evento.assistidoPor)})
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {(!pelada.partidas || pelada.partidas.length === 0) && (
-                <p className="text-center text-muted-foreground py-4">
-                  Nenhuma partida registrada
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pontuação dos Jogadores */}
-      {((pelada.jogadoresPresentes && pelada.jogadoresPresentes.length > 0) || 
-        (pelada.presencas && pelada.presencas.filter(p => p.presente).length > 0)) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Jogadores da Pelada</CardTitle>
-            <CardDescription>Status dos jogadores nesta pelada</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Jogador</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pelada.jogadoresPresentes ? 
-                  pelada.jogadoresPresentes.map((jogadorPresente, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
-                          {jogadorPresente.nome}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant={jogadorPresente.presente ? 'default' : 'secondary'}>
-                          {jogadorPresente.presente ? 'Presente' : 'Ausente'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  )) :
-                  pelada.presencas?.filter(p => p.presente).map((presenca, index) => {
-                    const jogador = jogadores.find(j => j.id === presenca.jogadorId);
-                    return (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <Link to={`/jogador/${presenca.jogadorId}`} className="hover:underline">
-                            {jogador?.nome || 'Jogador não encontrado'}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="default">
-                            Presente
-                            {presenca.atraso !== 'nenhum' && ` (${presenca.atraso})`}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                }
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Resumo Estatístico */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Jogadores</p>
+                <p className="text-2xl font-bold">{stats.jogadoresPresentes}</p>
+              </div>
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Partidas</p>
+                <p className="text-2xl font-bold">{stats.totalPartidas}</p>
+              </div>
+              <Trophy className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -249,26 +174,178 @@ const PeladaDetail: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Jogadores Presentes</p>
-                <p className="text-2xl font-bold">{stats.jogadoresPresentes}</p>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Cartões Aplicados</p>
+                <p className="text-sm font-medium text-muted-foreground">Cartões</p>
                 <p className="text-2xl font-bold">{stats.cartoes}</p>
               </div>
-              <div className="w-8 h-8 bg-yellow-500 rounded-sm" />
+              <Award className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Times */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-primary" />
+              <span>Times da Pelada</span>
+            </CardTitle>
+            <CardDescription>Composição dos times</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pelada.times?.map(time => (
+                <div key={time.id} className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="outline" className="text-lg font-semibold px-3 py-1">
+                      Time {time.identificadorLetra}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {time.jogadores.length} jogadores
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {time.jogadores.map((jogadorId, index) => (
+                      <div key={index} className="text-sm bg-white px-2 py-1 rounded border">
+                        <Link to={`/jogador/${jogadorId}`} className="hover:underline text-blue-600">
+                          {getJogadorNome(jogadorId)}
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {(!pelada.times || pelada.times.length === 0) && (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-muted-foreground">Nenhum time registrado</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Partidas e Resultados */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              <span>Partidas e Resultados</span>
+            </CardTitle>
+            <CardDescription>Jogos realizados na pelada</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pelada.partidas?.map((partida, index) => {
+                const timeALetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeA.includes(j)))?.identificadorLetra || 'A';
+                const timeBLetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeB.includes(j)))?.identificadorLetra || 'B';
+                
+                return (
+                  <div key={partida.id} className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
+                    <div className="text-center mb-4">
+                      <Badge variant="outline" className="mb-2">
+                        Partida {index + 1}
+                      </Badge>
+                      <div className="text-2xl font-bold flex items-center justify-center space-x-4">
+                        <span className="bg-blue-100 px-3 py-1 rounded">Time {timeALetra}</span>
+                        <span className="text-3xl">{partida.placarA}</span>
+                        <span className="text-muted-foreground">x</span>
+                        <span className="text-3xl">{partida.placarB}</span>
+                        <span className="bg-purple-100 px-3 py-1 rounded">Time {timeBLetra}</span>
+                      </div>
+                    </div>
+                    
+                    {partida.eventos && partida.eventos.length > 0 && (
+                      <div className="bg-white rounded-lg p-3 border">
+                        <h4 className="font-medium text-sm mb-3 flex items-center">
+                          <Clock className="h-4 w-4 mr-2 text-primary" />
+                          Eventos da Partida
+                        </h4>
+                        <div className="space-y-2">
+                          {partida.eventos.map((evento, eventIndex) => (
+                            <div key={eventIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <div className="flex items-center space-x-3">
+                                {getEventoIcon(evento.tipo)}
+                                <div>
+                                  <span className="font-medium text-sm">
+                                    <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline text-blue-600">
+                                      {getJogadorNome(evento.jogadorId)}
+                                    </Link>
+                                  </span>
+                                  {evento.assistidoPor && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Assistência: <Link to={`/jogador/${evento.assistidoPor}`} className="hover:underline text-blue-600">
+                                        {getJogadorNome(evento.assistidoPor)}
+                                      </Link>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">
+                                {getEventoTexto(evento.tipo)}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {(!pelada.partidas || pelada.partidas.length === 0) && (
+                <div className="text-center py-8">
+                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-medium text-muted-foreground">Nenhuma partida registrada</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Jogadores da Pelada */}
+      {((pelada.jogadoresPresentes && pelada.jogadoresPresentes.length > 0) || 
+        (pelada.presencas && pelada.presencas.filter(p => p.presente).length > 0)) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="h-5 w-5 text-primary" />
+              <span>Jogadores da Pelada</span>
+            </CardTitle>
+            <CardDescription>Lista completa dos jogadores presentes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {pelada.jogadoresPresentes ? 
+                pelada.jogadoresPresentes.map((jogadorPresente, index) => (
+                  <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                    <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
+                      <div className="font-medium text-sm">{jogadorPresente.nome}</div>
+                      <Badge variant={jogadorPresente.presente ? 'default' : 'secondary'} className="text-xs mt-1">
+                        {jogadorPresente.presente ? 'Presente' : 'Ausente'}
+                      </Badge>
+                    </Link>
+                  </div>
+                )) :
+                pelada.presencas?.filter(p => p.presente).map((presenca, index) => {
+                  const jogador = jogadores.find(j => j.id === presenca.jogadorId);
+                  return (
+                    <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                      <Link to={`/jogador/${presenca.jogadorId}`} className="hover:underline">
+                        <div className="font-medium text-sm">{jogador?.nome || 'Jogador não encontrado'}</div>
+                        <Badge variant="default" className="text-xs mt-1">
+                          Presente{presenca.atraso !== 'nenhum' && ` (${presenca.atraso})`}
+                        </Badge>
+                      </Link>
+                    </div>
+                  );
+                })
+              }
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

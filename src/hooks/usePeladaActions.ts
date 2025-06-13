@@ -87,7 +87,8 @@ export const usePeladaActions = (props: UsePeladaActionsProps) => {
     jogadoresPresentes: props.jogadoresPresentes,
     partidas: props.partidas,
     eventos: props.eventos,
-    resetStates: props.resetStates
+    resetStates: props.resetStates,
+    onTabChange: props.onTabChange
   });
 
   return {
