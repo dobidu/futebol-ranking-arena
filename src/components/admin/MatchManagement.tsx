@@ -85,7 +85,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
 
   const handleAdicionarEvento = () => {
     if (jogadorEvento && tipoEvento) {
-      const assistencia = tipoEvento === 'gol' && assistenciaEvento ? assistenciaEvento : undefined;
+      const assistencia = tipoEvento === 'gol' && assistenciaEvento && assistenciaEvento !== 'sem-assistencia' ? assistenciaEvento : undefined;
       adicionarEvento(tipoEvento, jogadorEvento, assistencia);
       setJogadorEvento('');
       setAssistenciaEvento('');
@@ -289,7 +289,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                           <SelectValue placeholder="Selecione a assistência" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sem assistência</SelectItem>
+                          <SelectItem value="sem-assistencia">Sem assistência</SelectItem>
                           {getJogadoresDoMesmoTime().map((jogador) => (
                             <SelectItem key={jogador.id} value={jogador.id}>
                               {jogador.nome}
