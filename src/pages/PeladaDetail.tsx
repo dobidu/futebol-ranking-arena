@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +6,7 @@ import { Calendar, Trophy, Users, ArrowLeft, Target, Edit, Clock, Award, Shield 
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { peladaService, temporadaService, jogadorService } from '@/services/dataService';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const PeladaDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +38,8 @@ const PeladaDetail: React.FC = () => {
     );
   }
 
+  console.log('Pelada completa carregada:', pelada);
+
   const getJogadorNome = (jogadorId: string) => {
     const jogador = jogadores.find(j => j.id === jogadorId);
     return jogador?.nome || 'Jogador não encontrado';
@@ -48,10 +50,18 @@ const PeladaDetail: React.FC = () => {
     let cartoes = 0;
     let totalPartidas = pelada.partidas?.length || 0;
     
+    console.log('Calculando estatísticas para pelada:', pelada);
+    
     pelada.partidas?.forEach(partida => {
-      // Corrigir o acesso aos gols - usar placarA e placarB
-      totalGols += (partida.placarA || 0) + (partida.placarB || 0);
+      console.log('Processando partida:', partida);
+      // Tentar múltiplas formas de acessar os gols
+      const golsA = partida.placarA || partida.golsTimeA || 0;
+      const golsB = partida.placarB || partida.golsTimeB || 0;
+      console.log('Gols da partida:', { golsA, golsB });
+      totalGols += golsA + golsB;
+      
       partida.eventos?.forEach(evento => {
+        console.log('Evento:', evento);
         if (evento.tipo !== 'gol') cartoes++;
       });
     });
@@ -71,6 +81,8 @@ const PeladaDetail: React.FC = () => {
       jogadoresPresentes = jogadoresUnicos.size;
     }
 
+    console.log('Estatísticas calculadas:', { totalGols, cartoes, totalPartidas, jogadoresPresentes });
+
     return { 
       totalGols, 
       cartoes, 
@@ -82,6 +94,7 @@ const PeladaDetail: React.FC = () => {
   const stats = calcularEstatisticas();
 
   const getEventoIcon = (tipo: string) => {
+    console.log('Renderizando ícone para tipo:', tipo);
     switch (tipo) {
       case 'gol':
         return <Target className="h-4 w-4 text-green-600" />;
@@ -98,6 +111,7 @@ const PeladaDetail: React.FC = () => {
           <Shield className="h-2 w-2 text-white" />
         </div>;
       default:
+        console.log('Tipo de evento não reconhecido:', tipo);
         return null;
     }
   };
@@ -176,7 +190,9 @@ const PeladaDetail: React.FC = () => {
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
             <Calendar className="h-8 w-8 text-primary" />
-            <span>Pelada - {new Date(pelada.data).toLocaleDateString('pt-BR')}</span>
+            <span>Pelada - {new Date(pelada.data).toLocaleDateString('pt-BR', {
+              timeZone: 'America/Sao_Paulo'
+            })}</span>
           </h1>
           <p className="text-muted-foreground">
             Temporada {temporada?.nome} • {stats.totalPartidas} partida{stats.totalPartidas !== 1 ? 's' : ''} realizada{stats.totalPartidas !== 1 ? 's' : ''}
@@ -299,6 +315,8 @@ const PeladaDetail: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {pelada.partidas?.map((partida, index) => {
+                console.log('Renderizando partida:', partida);
+                
                 // Encontrar times correspondentes
                 const timeA = timesDisponiveis.find(t => 
                   t.jogadores.length === partida.timeA.length && 
@@ -312,6 +330,10 @@ const PeladaDetail: React.FC = () => {
                 const timeALetra = timeA?.identificadorLetra || 'A';
                 const timeBLetra = timeB?.identificadorLetra || 'B';
                 
+                // Usar múltiplos campos para obter o placar
+                const placarA = partida.placarA || partida.golsTimeA || 0;
+                const placarB = partida.placarB || partida.golsTimeB || 0;
+                
                 return (
                   <div key={partida.id} className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
                     <div className="text-center mb-4">
@@ -320,9 +342,9 @@ const PeladaDetail: React.FC = () => {
                       </Badge>
                       <div className="text-2xl font-bold flex items-center justify-center space-x-4">
                         <span className="bg-blue-100 px-3 py-1 rounded">Time {timeALetra}</span>
-                        <span className="text-3xl">{partida.placarA}</span>
+                        <span className="text-3xl">{placarA}</span>
                         <span className="text-muted-foreground">x</span>
-                        <span className="text-3xl">{partida.placarB}</span>
+                        <span className="text-3xl">{placarB}</span>
                         <span className="bg-purple-100 px-3 py-1 rounded">Time {timeBLetra}</span>
                       </div>
                     </div>
@@ -333,32 +355,37 @@ const PeladaDetail: React.FC = () => {
                           <Clock className="h-4 w-4 mr-2 text-primary" />
                           Eventos da Partida ({partida.eventos.length})
                         </h4>
-                        <div className="space-y-2">
-                          {partida.eventos.map((evento, eventIndex) => (
-                            <div key={eventIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div className="flex items-center space-x-3">
-                                {getEventoIcon(evento.tipo)}
-                                <div>
-                                  <span className="font-medium text-sm">
-                                    <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline text-blue-600">
-                                      {getJogadorNome(evento.jogadorId)}
-                                    </Link>
-                                  </span>
-                                  {evento.assistidoPor && (
-                                    <div className="text-xs text-muted-foreground">
-                                      Assistência: <Link to={`/jogador/${evento.assistidoPor}`} className="hover:underline text-blue-600">
-                                        {getJogadorNome(evento.assistidoPor)}
-                                      </Link>
+                        <ScrollArea className="h-32">
+                          <div className="space-y-2 pr-4">
+                            {partida.eventos.map((evento, eventIndex) => {
+                              console.log('Renderizando evento:', evento);
+                              return (
+                                <div key={eventIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                  <div className="flex items-center space-x-3">
+                                    {getEventoIcon(evento.tipo)}
+                                    <div>
+                                      <span className="font-medium text-sm">
+                                        <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline text-blue-600">
+                                          {getJogadorNome(evento.jogadorId)}
+                                        </Link>
+                                      </span>
+                                      {evento.assistidoPor && (
+                                        <div className="text-xs text-muted-foreground">
+                                          Assistência: <Link to={`/jogador/${evento.assistidoPor}`} className="hover:underline text-blue-600">
+                                            {getJogadorNome(evento.assistidoPor)}
+                                          </Link>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
+                                  </div>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {getEventoTexto(evento.tipo)}
+                                  </Badge>
                                 </div>
-                              </div>
-                              <Badge variant="secondary" className="text-xs">
-                                {getEventoTexto(evento.tipo)}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
                       </div>
                     )}
                   </div>

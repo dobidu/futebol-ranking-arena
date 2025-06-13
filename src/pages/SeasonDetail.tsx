@@ -43,15 +43,21 @@ const SeasonDetail: React.FC = () => {
     let totalPartidas = 0;
     
     peladasTemporada.forEach(pelada => {
+      console.log('Pelada completa:', pelada);
       if (pelada.partidas) {
         totalPartidas += pelada.partidas.length;
         pelada.partidas.forEach(partida => {
-          // Usar placarA e placarB que são os campos corretos
-          totalGols += (partida.placarA || 0) + (partida.placarB || 0);
+          console.log('Partida dados:', partida);
+          // Tentar múltiplas formas de acessar os gols
+          const golsA = partida.placarA || partida.golsTimeA || 0;
+          const golsB = partida.placarB || partida.golsTimeB || 0;
+          console.log('Gols calculados:', { golsA, golsB });
+          totalGols += golsA + golsB;
         });
       }
     });
 
+    console.log('Estatísticas finais:', { totalGols, totalPartidas });
     return { totalGols, totalPartidas };
   };
 
@@ -112,15 +118,23 @@ const SeasonDetail: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {peladasTemporada.map(pelada => {
-              // Calcular estatísticas corrigidas para cada pelada
+              console.log('Processando pelada para exibição:', pelada);
+              
+              // Calcular estatísticas mais robustamente
               const stats = {
-                jogadores: pelada.jogadoresPresentes?.length || 
-                          pelada.presencas?.filter(p => p.presente).length || 0,
+                jogadores: pelada.jogadoresPresentes?.filter(j => j.presente).length || 
+                          pelada.presencas?.filter(p => p.presente).length || 
+                          (pelada.times ? pelada.times.reduce((acc, time) => acc + time.jogadores.length, 0) : 0),
                 partidas: pelada.partidas?.length || 0,
                 gols: pelada.partidas?.reduce((total, partida) => {
-                  return total + (partida.placarA || 0) + (partida.placarB || 0);
+                  const golsA = partida.placarA || partida.golsTimeA || 0;
+                  const golsB = partida.placarB || partida.golsTimeB || 0;
+                  console.log('Gols por partida:', { partidaId: partida.id, golsA, golsB });
+                  return total + golsA + golsB;
                 }, 0) || 0
               };
+
+              console.log('Stats calculadas:', stats);
 
               const linkTo = isAdminRoute ? `/admin/pelada/${pelada.id}` : `/pelada/${pelada.id}`;
 
@@ -133,7 +147,9 @@ const SeasonDetail: React.FC = () => {
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4 text-primary" />
                             <span className="text-sm font-medium">
-                              {new Date(pelada.data).toLocaleDateString('pt-BR')}
+                              {new Date(pelada.data).toLocaleDateString('pt-BR', {
+                                timeZone: 'America/Sao_Paulo'
+                              })}
                             </span>
                           </div>
                           {isAdminRoute && (
