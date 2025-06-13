@@ -67,6 +67,8 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/jogadores" element={<AdminPlayers />} />
             <Route path="/admin/temporadas" element={<AdminSeasons />} />
+            <Route path="/admin/temporadas/:id" element={<SeasonDetail />} />
+            <Route path="/admin/pelada/:id" element={<PeladaDetail />} />
             <Route path="/admin/peladas" element={<AdminPeladas />} />
             <Route path="/admin/peladas/editar/:id" element={<AdminPeladas />} />
             <Route path="*" element={<NotFound />} />

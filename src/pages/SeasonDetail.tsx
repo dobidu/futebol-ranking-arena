@@ -132,11 +132,26 @@ const SeasonDetail: React.FC = () => {
                             </span>
                           </div>
                           {isAdminRoute && (
-                            <Link to={`/admin/peladas/editar/${pelada.id}`} onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </Link>
+                            <div className="flex space-x-2">
+                              <Link 
+                                to={`/admin/pelada/${pelada.id}`} 
+                                onClick={(e) => e.stopPropagation()}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <PlayCircle className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Link 
+                                to={`/admin/peladas/editar/${pelada.id}`} 
+                                onClick={(e) => e.stopPropagation()}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </div>
                           )}
                         </div>
                         

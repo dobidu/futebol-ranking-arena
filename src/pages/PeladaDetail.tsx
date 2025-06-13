@@ -3,7 +3,6 @@ import React from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar, Trophy, Users, ArrowLeft, Target, Edit, Clock, Award, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -56,11 +55,26 @@ const PeladaDetail: React.FC = () => {
       });
     });
 
+    // Calcular jogadores presentes de forma mais robusta
+    let jogadoresPresentes = 0;
+    if (pelada.jogadoresPresentes) {
+      jogadoresPresentes = pelada.jogadoresPresentes.filter(j => j.presente).length;
+    } else if (pelada.presencas) {
+      jogadoresPresentes = pelada.presencas.filter(p => p.presente).length;
+    } else if (pelada.times) {
+      // Se não temos dados de presença, contar jogadores únicos nos times
+      const jogadoresUnicos = new Set();
+      pelada.times.forEach(time => {
+        time.jogadores.forEach(jogadorId => jogadoresUnicos.add(jogadorId));
+      });
+      jogadoresPresentes = jogadoresUnicos.size;
+    }
+
     return { 
       totalGols, 
       cartoes, 
       totalPartidas,
-      jogadoresPresentes: pelada.jogadoresPresentes?.length || pelada.presencas?.filter(p => p.presente).length || 0 
+      jogadoresPresentes
     };
   };
 
@@ -101,6 +115,51 @@ const PeladaDetail: React.FC = () => {
         return tipo;
     }
   };
+
+  // Função para obter times da pelada de forma mais robusta
+  const getTimesFromPelada = () => {
+    if (pelada.times && pelada.times.length > 0) {
+      return pelada.times;
+    }
+    
+    // Se não temos times diretos, tentar extrair dos partidas
+    if (pelada.partidas && pelada.partidas.length > 0) {
+      const timesMap = new Map();
+      
+      pelada.partidas.forEach(partida => {
+        // Criar times baseados nas partidas
+        if (partida.timeA && partida.timeA.length > 0) {
+          const timeAKey = partida.timeA.sort().join(',');
+          if (!timesMap.has(timeAKey)) {
+            timesMap.set(timeAKey, {
+              id: `time-a-${timesMap.size}`,
+              peladaId: pelada.id,
+              identificadorLetra: String.fromCharCode(65 + timesMap.size), // A, B, C...
+              jogadores: partida.timeA
+            });
+          }
+        }
+        
+        if (partida.timeB && partida.timeB.length > 0) {
+          const timeBKey = partida.timeB.sort().join(',');
+          if (!timesMap.has(timeBKey)) {
+            timesMap.set(timeBKey, {
+              id: `time-b-${timesMap.size}`,
+              peladaId: pelada.id,
+              identificadorLetra: String.fromCharCode(65 + timesMap.size), // A, B, C...
+              jogadores: partida.timeB
+            });
+          }
+        }
+      });
+      
+      return Array.from(timesMap.values());
+    }
+    
+    return [];
+  };
+
+  const timesDisponiveis = getTimesFromPelada();
 
   const backUrl = isAdminRoute ? `/admin/temporadas/${pelada.temporadaId}` : `/temporada/${pelada.temporadaId}`;
 
@@ -191,11 +250,11 @@ const PeladaDetail: React.FC = () => {
               <Users className="h-5 w-5 text-primary" />
               <span>Times da Pelada</span>
             </CardTitle>
-            <CardDescription>Composição dos times</CardDescription>
+            <CardDescription>Composição dos times ({timesDisponiveis.length} times registrados)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {pelada.times?.map(time => (
+              {timesDisponiveis.map(time => (
                 <div key={time.id} className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50">
                   <div className="flex items-center justify-between mb-3">
                     <Badge variant="outline" className="text-lg font-semibold px-3 py-1">
@@ -216,10 +275,11 @@ const PeladaDetail: React.FC = () => {
                   </div>
                 </div>
               ))}
-              {(!pelada.times || pelada.times.length === 0) && (
+              {timesDisponiveis.length === 0 && (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-lg font-medium text-muted-foreground">Nenhum time registrado</p>
+                  <p className="text-sm text-muted-foreground">Os times aparecerão quando as partidas forem criadas</p>
                 </div>
               )}
             </div>
@@ -238,8 +298,18 @@ const PeladaDetail: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {pelada.partidas?.map((partida, index) => {
-                const timeALetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeA.includes(j)))?.identificadorLetra || 'A';
-                const timeBLetra = pelada.times?.find(t => t.jogadores.some(j => partida.timeB.includes(j)))?.identificadorLetra || 'B';
+                // Encontrar times correspondentes
+                const timeA = timesDisponiveis.find(t => 
+                  t.jogadores.length === partida.timeA.length && 
+                  t.jogadores.every(j => partida.timeA.includes(j))
+                );
+                const timeB = timesDisponiveis.find(t => 
+                  t.jogadores.length === partida.timeB.length && 
+                  t.jogadores.every(j => partida.timeB.includes(j))
+                );
+                
+                const timeALetra = timeA?.identificadorLetra || 'A';
+                const timeBLetra = timeB?.identificadorLetra || 'B';
                 
                 return (
                   <div key={partida.id} className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
@@ -260,7 +330,7 @@ const PeladaDetail: React.FC = () => {
                       <div className="bg-white rounded-lg p-3 border">
                         <h4 className="font-medium text-sm mb-3 flex items-center">
                           <Clock className="h-4 w-4 mr-2 text-primary" />
-                          Eventos da Partida
+                          Eventos da Partida ({partida.eventos.length})
                         </h4>
                         <div className="space-y-2">
                           {partida.eventos.map((evento, eventIndex) => (
@@ -305,25 +375,25 @@ const PeladaDetail: React.FC = () => {
       </div>
 
       {/* Jogadores da Pelada */}
-      {((pelada.jogadoresPresentes && pelada.jogadoresPresentes.length > 0) || 
-        (pelada.presencas && pelada.presencas.filter(p => p.presente).length > 0)) && (
+      {stats.jogadoresPresentes > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-primary" />
               <span>Jogadores da Pelada</span>
             </CardTitle>
-            <CardDescription>Lista completa dos jogadores presentes</CardDescription>
+            <CardDescription>Lista completa dos jogadores presentes ({stats.jogadoresPresentes} jogadores)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {/* Exibir jogadores presentes */}
               {pelada.jogadoresPresentes ? 
-                pelada.jogadoresPresentes.map((jogadorPresente, index) => (
+                pelada.jogadoresPresentes.filter(j => j.presente).map((jogadorPresente, index) => (
                   <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
                     <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
                       <div className="font-medium text-sm">{jogadorPresente.nome}</div>
-                      <Badge variant={jogadorPresente.presente ? 'default' : 'secondary'} className="text-xs mt-1">
-                        {jogadorPresente.presente ? 'Presente' : 'Ausente'}
+                      <Badge variant="default" className="text-xs mt-1">
+                        {jogadorPresente.tipo}
                       </Badge>
                     </Link>
                   </div>
@@ -342,6 +412,29 @@ const PeladaDetail: React.FC = () => {
                   );
                 })
               }
+              
+              {/* Se não há dados de presença, exibir jogadores dos times */}
+              {!pelada.jogadoresPresentes && !pelada.presencas && timesDisponiveis.length > 0 && (
+                (() => {
+                  const jogadoresUnicos = new Set();
+                  timesDisponiveis.forEach(time => {
+                    time.jogadores.forEach(jogadorId => jogadoresUnicos.add(jogadorId));
+                  });
+                  return Array.from(jogadoresUnicos).map((jogadorId, index) => {
+                    const jogador = jogadores.find(j => j.id === jogadorId);
+                    return (
+                      <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                        <Link to={`/jogador/${jogadorId}`} className="hover:underline">
+                          <div className="font-medium text-sm">{jogador?.nome || 'Jogador não encontrado'}</div>
+                          <Badge variant="default" className="text-xs mt-1">
+                            {jogador?.tipo || 'Tipo não definido'}
+                          </Badge>
+                        </Link>
+                      </div>
+                    );
+                  });
+                })()
+              )}
             </div>
           </CardContent>
         </Card>
