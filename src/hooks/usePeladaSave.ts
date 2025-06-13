@@ -59,6 +59,11 @@ export const usePeladaSave = ({
         return;
       }
 
+      console.log('usePeladaSave - Salvando pelada:', pelada);
+      console.log('usePeladaSave - Data original:', pelada.data);
+      console.log('usePeladaSave - Partidas:', partidas);
+      console.log('usePeladaSave - Eventos:', eventos);
+
       const presencasAtualizadas = jogadoresPresentes
         .filter(j => j.presente)
         .map(j => ({
@@ -88,12 +93,16 @@ export const usePeladaSave = ({
           }))
       }));
 
+      // Preservar a data original sem alterações de timezone
       const peladaAtualizada = {
         ...pelada,
+        data: pelada.data, // Manter a data original sem conversões
         partidas: partidasFormatadas,
         presencas: presencasAtualizadas,
         jogadoresPresentes: jogadoresPresentes.filter(j => j.presente)
       };
+
+      console.log('usePeladaSave - Pelada atualizada:', peladaAtualizada);
 
       peladaService.update(peladaAtual, peladaAtualizada);
 

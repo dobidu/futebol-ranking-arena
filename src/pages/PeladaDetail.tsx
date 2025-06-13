@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +39,7 @@ const PeladaDetail: React.FC = () => {
     );
   }
 
-  console.log('Pelada completa carregada:', pelada);
+  console.log('PeladaDetail - Pelada completa carregada:', pelada);
 
   const getJogadorNome = (jogadorId: string) => {
     const jogador = jogadores.find(j => j.id === jogadorId);
@@ -50,18 +51,17 @@ const PeladaDetail: React.FC = () => {
     let cartoes = 0;
     let totalPartidas = pelada.partidas?.length || 0;
     
-    console.log('Calculando estatísticas para pelada:', pelada);
+    console.log('PeladaDetail - Calculando estatísticas para pelada:', pelada);
     
     pelada.partidas?.forEach(partida => {
-      console.log('Processando partida:', partida);
-      // Tentar múltiplas formas de acessar os gols
-      const golsA = partida.placarA || partida.golsTimeA || 0;
-      const golsB = partida.placarB || partida.golsTimeB || 0;
-      console.log('Gols da partida:', { golsA, golsB });
+      console.log('PeladaDetail - Processando partida:', partida);
+      const golsA = partida.placarA || 0;
+      const golsB = partida.placarB || 0;
+      console.log('PeladaDetail - Gols da partida:', { golsA, golsB });
       totalGols += golsA + golsB;
       
       partida.eventos?.forEach(evento => {
-        console.log('Evento:', evento);
+        console.log('PeladaDetail - Evento:', evento);
         if (evento.tipo !== 'gol') cartoes++;
       });
     });
@@ -73,7 +73,6 @@ const PeladaDetail: React.FC = () => {
     } else if (pelada.presencas) {
       jogadoresPresentes = pelada.presencas.filter(p => p.presente).length;
     } else if (pelada.times) {
-      // Se não temos dados de presença, contar jogadores únicos nos times
       const jogadoresUnicos = new Set();
       pelada.times.forEach(time => {
         time.jogadores.forEach(jogadorId => jogadoresUnicos.add(jogadorId));
@@ -81,7 +80,7 @@ const PeladaDetail: React.FC = () => {
       jogadoresPresentes = jogadoresUnicos.size;
     }
 
-    console.log('Estatísticas calculadas:', { totalGols, cartoes, totalPartidas, jogadoresPresentes });
+    console.log('PeladaDetail - Estatísticas calculadas:', { totalGols, cartoes, totalPartidas, jogadoresPresentes });
 
     return { 
       totalGols, 
@@ -94,7 +93,7 @@ const PeladaDetail: React.FC = () => {
   const stats = calcularEstatisticas();
 
   const getEventoIcon = (tipo: string) => {
-    console.log('Renderizando ícone para tipo:', tipo);
+    console.log('PeladaDetail - Renderizando ícone para tipo:', tipo);
     switch (tipo) {
       case 'gol':
         return <Target className="h-4 w-4 text-green-600" />;
@@ -111,7 +110,7 @@ const PeladaDetail: React.FC = () => {
           <Shield className="h-2 w-2 text-white" />
         </div>;
       default:
-        console.log('Tipo de evento não reconhecido:', tipo);
+        console.log('PeladaDetail - Tipo de evento não reconhecido:', tipo);
         return null;
     }
   };
@@ -315,7 +314,7 @@ const PeladaDetail: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {pelada.partidas?.map((partida, index) => {
-                console.log('Renderizando partida:', partida);
+                console.log('PeladaDetail - Renderizando partida:', partida);
                 
                 // Encontrar times correspondentes
                 const timeA = timesDisponiveis.find(t => 
@@ -330,9 +329,8 @@ const PeladaDetail: React.FC = () => {
                 const timeALetra = timeA?.identificadorLetra || 'A';
                 const timeBLetra = timeB?.identificadorLetra || 'B';
                 
-                // Usar múltiplos campos para obter o placar
-                const placarA = partida.placarA || partida.golsTimeA || 0;
-                const placarB = partida.placarB || partida.golsTimeB || 0;
+                const placarA = partida.placarA || 0;
+                const placarB = partida.placarB || 0;
                 
                 return (
                   <div key={partida.id} className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
@@ -355,10 +353,10 @@ const PeladaDetail: React.FC = () => {
                           <Clock className="h-4 w-4 mr-2 text-primary" />
                           Eventos da Partida ({partida.eventos.length})
                         </h4>
-                        <ScrollArea className="h-32">
+                        <ScrollArea className="h-48">
                           <div className="space-y-2 pr-4">
                             {partida.eventos.map((evento, eventIndex) => {
-                              console.log('Renderizando evento:', evento);
+                              console.log('PeladaDetail - Renderizando evento:', evento);
                               return (
                                 <div key={eventIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                   <div className="flex items-center space-x-3">
