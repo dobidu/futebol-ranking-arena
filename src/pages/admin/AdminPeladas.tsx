@@ -49,27 +49,44 @@ const AdminPeladas: React.FC = () => {
   const canGoToFinalizar = peladaState.partidas.length > 0 || isEditMode;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">{pageTitle}</h1>
-        <p className="text-muted-foreground">{pageDescription}</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{pageTitle}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">{pageDescription}</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="nova-pelada">
-            {isEditMode ? 'Dados da Pelada' : 'Nova Pelada'}
-          </TabsTrigger>
-          <TabsTrigger value="times" disabled={!canGoToTimes}>
-            Formar Times
-          </TabsTrigger>
-          <TabsTrigger value="partidas" disabled={!canGoToPartidas}>
-            Partidas
-          </TabsTrigger>
-          <TabsTrigger value="salvar" disabled={!canGoToFinalizar}>
-            Finalizar
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-4 min-w-max sm:min-w-0">
+            <TabsTrigger 
+              value="nova-pelada" 
+              className="text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap"
+            >
+              {isEditMode ? 'Dados' : 'Nova Pelada'}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="times" 
+              disabled={!canGoToTimes}
+              className="text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap"
+            >
+              Times
+            </TabsTrigger>
+            <TabsTrigger 
+              value="partidas" 
+              disabled={!canGoToPartidas}
+              className="text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap"
+            >
+              Partidas
+            </TabsTrigger>
+            <TabsTrigger 
+              value="salvar" 
+              disabled={!canGoToFinalizar}
+              className="text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap"
+            >
+              Finalizar
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="nova-pelada">
           <PeladaCreationForm

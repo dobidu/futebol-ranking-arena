@@ -45,31 +45,33 @@ const PeladaPlayers: React.FC<PeladaPlayersProps> = ({
     <>
       {jogadoresPresentes > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
               <Users className="h-5 w-5 text-primary" />
               <span>Jogadores da Pelada</span>
             </CardTitle>
-            <CardDescription>Lista completa dos jogadores presentes ({jogadoresPresentes} jogadores)</CardDescription>
+            <CardDescription className="text-sm">
+              Lista completa dos jogadores presentes ({jogadoresPresentes} jogador{jogadoresPresentes !== 1 ? 'es' : ''})
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {/* Exibir jogadores presentes */}
               {pelada.jogadoresPresentes ? 
                 pelada.jogadoresPresentes.filter(j => j.presente).map((jogadorPresente, index) => {
                   const atrasoTexto = getAtrasoTexto(jogadorPresente.atraso || 'nenhum');
                   return (
-                    <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                      <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
-                        <div className="font-medium text-sm">{jogadorPresente.nome}</div>
-                        <div className="flex flex-col gap-1 mt-1">
-                          <Badge variant="default" className="text-xs">
+                    <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border hover:shadow-md transition-shadow">
+                      <Link to={`/jogador/${jogadorPresente.id}`} className="block hover:underline">
+                        <div className="font-medium text-sm mb-2 break-words">{jogadorPresente.nome}</div>
+                        <div className="flex flex-col gap-2">
+                          <Badge variant="default" className="text-xs w-fit">
                             {jogadorPresente.tipo}
                           </Badge>
                           {atrasoTexto && (
-                            <Badge variant={getAtrasoVariant(jogadorPresente.atraso || 'nenhum')} className="text-xs flex items-center gap-1">
+                            <Badge variant={getAtrasoVariant(jogadorPresente.atraso || 'nenhum')} className="text-xs flex items-center gap-1 w-fit">
                               <Clock className="h-3 w-3" />
-                              {atrasoTexto}
+                              <span className="truncate">{atrasoTexto}</span>
                             </Badge>
                           )}
                         </div>
@@ -81,17 +83,17 @@ const PeladaPlayers: React.FC<PeladaPlayersProps> = ({
                   const jogador = jogadores.find(j => j.id === presenca.jogadorId);
                   const atrasoTexto = getAtrasoTexto(presenca.atraso);
                   return (
-                    <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                      <Link to={`/jogador/${presenca.jogadorId}`} className="hover:underline">
-                        <div className="font-medium text-sm">{jogador?.nome || 'Jogador não encontrado'}</div>
-                        <div className="flex flex-col gap-1 mt-1">
-                          <Badge variant="default" className="text-xs">
+                    <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border hover:shadow-md transition-shadow">
+                      <Link to={`/jogador/${presenca.jogadorId}`} className="block hover:underline">
+                        <div className="font-medium text-sm mb-2 break-words">{jogador?.nome || 'Jogador não encontrado'}</div>
+                        <div className="flex flex-col gap-2">
+                          <Badge variant="default" className="text-xs w-fit">
                             Presente
                           </Badge>
                           {atrasoTexto && (
-                            <Badge variant={getAtrasoVariant(presenca.atraso)} className="text-xs flex items-center gap-1">
+                            <Badge variant={getAtrasoVariant(presenca.atraso)} className="text-xs flex items-center gap-1 w-fit">
                               <Clock className="h-3 w-3" />
-                              {atrasoTexto}
+                              <span className="truncate">{atrasoTexto}</span>
                             </Badge>
                           )}
                         </div>
@@ -111,10 +113,10 @@ const PeladaPlayers: React.FC<PeladaPlayersProps> = ({
                   return Array.from(jogadoresUnicos).map((jogadorId, index) => {
                     const jogador = jogadores.find(j => j.id === jogadorId);
                     return (
-                      <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                        <Link to={`/jogador/${jogadorId}`} className="hover:underline">
-                          <div className="font-medium text-sm">{jogador?.nome || 'Jogador não encontrado'}</div>
-                          <Badge variant="default" className="text-xs mt-1">
+                      <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border hover:shadow-md transition-shadow">
+                        <Link to={`/jogador/${jogadorId}`} className="block hover:underline">
+                          <div className="font-medium text-sm mb-2 break-words">{jogador?.nome || 'Jogador não encontrado'}</div>
+                          <Badge variant="default" className="text-xs w-fit">
                             {jogador?.tipo || 'Tipo não definido'}
                           </Badge>
                         </Link>

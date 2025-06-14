@@ -96,6 +96,25 @@
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
   }
+
+  /* Melhorar scrollbars em webkit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
 }
 
 @layer components {
@@ -112,15 +131,47 @@
   }
   
   .match-score {
-    @apply text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent;
+    @apply text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent;
   }
   
   .event-badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    @apply inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium;
   }
   
   .stats-card {
-    @apply bg-white p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-white p-3 sm:p-4 rounded-lg border shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  /* Melhorar responsividade das tabs */
+  .mobile-tabs {
+    @apply overflow-x-auto;
+  }
+
+  .mobile-tabs [role="tablist"] {
+    @apply min-w-max;
+  }
+
+  /* Cards responsivos */
+  .responsive-card {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+
+  .responsive-card-header {
+    @apply pb-2 sm:pb-3;
+  }
+
+  /* Grids responsivos */
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4;
+  }
+
+  /* Textos responsivos */
+  .responsive-title {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+
+  .responsive-subtitle {
+    @apply text-sm sm:text-base;
   }
 }
 
@@ -135,6 +186,24 @@
   
   .animate-bounce-gentle {
     animation: bounceGentle 2s infinite;
+  }
+
+  /* Utilities para mobile */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Melhorar clique em dispositivos móveis */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -169,5 +238,25 @@
   }
   60% { 
     transform: translateY(-3px); 
+  }
+}
+
+/* Media queries para melhor controle */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Melhorar forms em mobile */
+  input, select, textarea {
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+}
+
+@media (max-width: 768px) {
+  /* Ajustar spacing em tablets */
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem;
   }
 }
