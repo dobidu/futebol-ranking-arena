@@ -82,6 +82,7 @@ const AdminPeladas: React.FC = () => {
             jogadoresPresentes={peladaState.jogadoresPresentes}
             criarPelada={peladaActions.criarPelada}
             togglePresenca={peladaActions.togglePresenca}
+            setAtrasoJogador={peladaActions.setAtrasoJogador}
             isEditMode={isEditMode}
             peladaParaEdicao={peladaParaEdicao}
             onNextStep={() => setActiveTab('times')}
