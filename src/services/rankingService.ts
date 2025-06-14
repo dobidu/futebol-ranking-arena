@@ -1,6 +1,10 @@
 
 import { RankingJogador } from '@/types';
 import { peladaService, temporadaService, jogadorService } from './dataService';
+import { detectarPresencaJogador, calcularPenalidadeAtraso } from '@/utils/presenceUtils';
+import { calcularPontosPartida } from '@/utils/matchUtils';
+import { processarEventosJogador } from '@/utils/eventUtils';
+import { ordenarRanking, criarItemRanking } from '@/utils/rankingUtils';
 
 export const calcularRanking = (temporadaId?: string): RankingJogador[] => {
   const peladas = peladaService.getAll();
@@ -33,143 +37,68 @@ export const calcularRanking = (temporadaId?: string): RankingJogador[] => {
     let pontuacaoTotal = 0;
     let presencas = 0;
     let vitorias = 0;
-    let gols = 0;
-    let assistencias = 0;
-    let cartoesAmarelos = 0;
-    let cartoesAzuis = 0;
-    let cartoesVermelhos = 0;
+    let eventStatsTotal = {
+      gols: 0,
+      assistencias: 0,
+      cartoesAmarelos: 0,
+      cartoesAzuis: 0,
+      cartoesVermelhos: 0,
+      penalizacoes: 0
+    };
 
     peladasFiltradas.forEach(pelada => {
       console.log('calcularRanking - Processando pelada:', pelada.id);
       
-      // Verificar presença de múltiplas formas
-      let jogadorPresente = false;
+      // Verificar presença
+      const jogadorPresente = detectarPresencaJogador(pelada, jogador);
       
-      // Método 1: presencas
-      if (pelada.presencas) {
-        const presenca = pelada.presencas.find(p => p.jogadorId === jogador.id);
-        if (presenca && presenca.presente) {
-          jogadorPresente = true;
-          presencas++;
-          pontuacaoTotal += 1;
-          
-          if (presenca.atraso === 'tipo1') {
-            pontuacaoTotal += temporadaSelecionada.penalidadeAtraso1;
-          } else if (presenca.atraso === 'tipo2') {
-            pontuacaoTotal += temporadaSelecionada.penalidadeAtraso2;
-          }
-        }
-      }
-      
-      // Método 2: jogadoresPresentes
-      if (!jogadorPresente && pelada.jogadoresPresentes) {
-        const jogadorPresenteObj = pelada.jogadoresPresentes.find(jp => jp.id === jogador.id);
-        if (jogadorPresenteObj && jogadorPresenteObj.presente) {
-          jogadorPresente = true;
-          presencas++;
-          pontuacaoTotal += 1;
-        }
-      }
-      
-      // Método 3: verificar se jogador está em algum time
-      if (!jogadorPresente && pelada.times) {
-        const estaEmTime = pelada.times.some(time => time.jogadores.includes(jogador.id));
-        if (estaEmTime) {
-          jogadorPresente = true;
-          presencas++;
-          pontuacaoTotal += 1;
-        }
-      }
+      if (jogadorPresente) {
+        presencas++;
+        pontuacaoTotal += 1; // Ponto por presença
+        
+        // Calcular penalidade de atraso
+        const penalidadeAtraso = calcularPenalidadeAtraso(pelada, jogador, temporadaSelecionada);
+        pontuacaoTotal += penalidadeAtraso;
 
-      // Se jogador esteve presente, processar partidas
-      if (jogadorPresente && pelada.partidas && pelada.partidas.length > 0) {
-        pelada.partidas.forEach(partida => {
-          const jogadorNoTimeA = partida.timeA?.includes(jogador.id);
-          const jogadorNoTimeB = partida.timeB?.includes(jogador.id);
-          
-          if (jogadorNoTimeA || jogadorNoTimeB) {
-            let pontos = 0;
-            
-            // Usar placarA e placarB para determinar resultado
-            const golsA = partida.placarA || partida.golsTimeA || 0;
-            const golsB = partida.placarB || partida.golsTimeB || 0;
-            
-            if (golsA > golsB) {
-              if (jogadorNoTimeA) {
-                pontos = temporadaSelecionada.pontosVitoria;
-                vitorias++;
-              } else {
-                pontos = temporadaSelecionada.pontosDerrota;
-              }
-            } else if (golsB > golsA) {
-              if (jogadorNoTimeB) {
-                pontos = temporadaSelecionada.pontosVitoria;
-                vitorias++;
-              } else {
-                pontos = temporadaSelecionada.pontosDerrota;
-              }
-            } else {
-              pontos = temporadaSelecionada.pontosEmpate;
-            }
-            
+        // Processar partidas se jogador esteve presente
+        if (pelada.partidas && pelada.partidas.length > 0) {
+          pelada.partidas.forEach(partida => {
+            // Calcular pontos da partida
+            const { pontos, vitoria } = calcularPontosPartida(partida, jogador, temporadaSelecionada);
             pontuacaoTotal += pontos;
-          }
+            if (vitoria) vitorias++;
 
-          // Processar eventos da partida
-          if (partida.eventos && partida.eventos.length > 0) {
-            partida.eventos.forEach(evento => {
-              if (evento.jogadorId === jogador.id) {
-                switch (evento.tipo) {
-                  case 'gol':
-                    gols++;
-                    break;
-                  case 'cartao_amarelo':
-                    cartoesAmarelos++;
-                    pontuacaoTotal += temporadaSelecionada.penalidadeCartaoAmarelo;
-                    break;
-                  case 'cartao_azul':
-                    cartoesAzuis++;
-                    pontuacaoTotal += temporadaSelecionada.penalidadeCartaoAzul;
-                    break;
-                  case 'cartao_vermelho':
-                    cartoesVermelhos++;
-                    pontuacaoTotal += temporadaSelecionada.penalidadeCartaoVermelho;
-                    break;
-                }
-              }
+            // Processar eventos da partida
+            if (partida.eventos && partida.eventos.length > 0) {
+              const eventStats = processarEventosJogador(partida.eventos, jogador, temporadaSelecionada);
               
-              if (evento.assistidoPor === jogador.id) {
-                assistencias++;
-              }
-            });
-          }
-        });
+              eventStatsTotal.gols += eventStats.gols;
+              eventStatsTotal.assistencias += eventStats.assistencias;
+              eventStatsTotal.cartoesAmarelos += eventStats.cartoesAmarelos;
+              eventStatsTotal.cartoesAzuis += eventStats.cartoesAzuis;
+              eventStatsTotal.cartoesVermelhos += eventStats.cartoesVermelhos;
+              pontuacaoTotal += eventStats.penalizacoes;
+            }
+          });
+        }
       }
     });
 
     if (presencas > 0) {
-      ranking.push({
+      const itemRanking = criarItemRanking(
         jogador,
-        pontuacaoTotal: Number(pontuacaoTotal.toFixed(1)),
+        pontuacaoTotal,
         vitorias,
         presencas,
-        gols,
-        assistencias,
-        cartoesAmarelos,
-        cartoesAzuis,
-        cartoesVermelhos,
-        mediaPresenca: presencas > 0 ? pontuacaoTotal / presencas : 0,
-        posicao: 0
-      });
+        eventStatsTotal
+      );
+      ranking.push(itemRanking);
     }
   });
 
-  ranking.sort((a, b) => b.pontuacaoTotal - a.pontuacaoTotal);
-  ranking.forEach((item, index) => {
-    item.posicao = index + 1;
-  });
+  const rankingFinal = ordenarRanking(ranking);
 
-  console.log('calcularRanking - Ranking final:', ranking.length, 'jogadores');
-  console.log('calcularRanking - Dados do ranking:', ranking);
-  return ranking;
+  console.log('calcularRanking - Ranking final:', rankingFinal.length, 'jogadores');
+  console.log('calcularRanking - Dados do ranking:', rankingFinal);
+  return rankingFinal;
 };
