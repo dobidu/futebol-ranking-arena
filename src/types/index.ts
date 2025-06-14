@@ -1,4 +1,3 @@
-
 // Tipos principais da aplicação
 export interface Temporada {
   id: string;
@@ -40,6 +39,7 @@ export interface JogadorPresente {
   nome: string;
   tipo: string;
   presente: boolean;
+  atraso?: 'nenhum' | 'tipo1' | 'tipo2';
 }
 
 export interface PartidaPelada {

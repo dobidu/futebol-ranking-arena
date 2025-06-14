@@ -71,7 +71,7 @@ export const usePeladaSave = ({
           peladaId: peladaAtual,
           jogadorId: j.id,
           presente: true,
-          atraso: 'nenhum' as const
+          atraso: j.atraso || 'nenhum' as const
         }));
 
       const partidasFormatadas = partidas.map((p, index) => {

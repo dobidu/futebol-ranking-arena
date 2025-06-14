@@ -8,6 +8,7 @@ interface JogadorPresente {
   nome: string;
   tipo: string;
   presente: boolean;
+  atraso: 'nenhum' | 'tipo1' | 'tipo2';
 }
 
 interface EventoPartida {
@@ -82,12 +83,13 @@ export const usePeladaCreation = ({
       setPartidaAtual(null);
       setEventos([]);
 
-      // Preparar lista de jogadores
+      // Preparar lista de jogadores com campo de atraso
       const jogadoresComPresenca: JogadorPresente[] = jogadores.map(jogador => ({
         id: jogador.id,
         nome: jogador.nome,
         tipo: jogador.tipo,
-        presente: false
+        presente: false,
+        atraso: 'nenhum'
       }));
 
       setJogadoresPresentes(jogadoresComPresenca);
@@ -113,7 +115,17 @@ export const usePeladaCreation = ({
     setJogadoresPresentes(prev => 
       prev.map(jogador => 
         jogador.id === jogadorId 
-          ? { ...jogador, presente: !jogador.presente }
+          ? { ...jogador, presente: !jogador.presente, atraso: !jogador.presente ? 'nenhum' : jogador.atraso }
+          : jogador
+      )
+    );
+  };
+
+  const setAtrasoJogador = (jogadorId: string, atraso: 'nenhum' | 'tipo1' | 'tipo2') => {
+    setJogadoresPresentes(prev => 
+      prev.map(jogador => 
+        jogador.id === jogadorId 
+          ? { ...jogador, atraso }
           : jogador
       )
     );
@@ -121,6 +133,7 @@ export const usePeladaCreation = ({
 
   return {
     criarPelada,
-    togglePresenca
+    togglePresenca,
+    setAtrasoJogador
   };
 };

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, Users, ArrowRight, UserCheck } from 'lucide-react';
+import { CalendarIcon, Users, ArrowRight, UserCheck, Clock } from 'lucide-react';
 import { Temporada, Jogador } from '@/types';
 
 interface JogadorPresente {
@@ -14,6 +14,7 @@ interface JogadorPresente {
   nome: string;
   tipo: string;
   presente: boolean;
+  atraso: 'nenhum' | 'tipo1' | 'tipo2';
 }
 
 interface PeladaCreationFormProps {
@@ -26,6 +27,7 @@ interface PeladaCreationFormProps {
   jogadoresPresentes: JogadorPresente[];
   criarPelada: () => void;
   togglePresenca: (jogadorId: string) => void;
+  setAtrasoJogador: (jogadorId: string, atraso: 'nenhum' | 'tipo1' | 'tipo2') => void;
   isEditMode?: boolean;
   peladaParaEdicao?: any;
   onNextStep?: () => void;
@@ -41,6 +43,7 @@ const PeladaCreationForm: React.FC<PeladaCreationFormProps> = ({
   jogadoresPresentes,
   criarPelada,
   togglePresenca,
+  setAtrasoJogador,
   isEditMode = false,
   peladaParaEdicao,
   onNextStep
@@ -66,6 +69,19 @@ const PeladaCreationForm: React.FC<PeladaCreationFormProps> = ({
   };
 
   const canProceed = jogadoresPresentes.some(j => j.presente);
+
+  const temporadaAtual = temporadas.find(t => t.id === selectedTemporada);
+
+  const getAtrasoTexto = (atraso: string) => {
+    switch (atraso) {
+      case 'tipo1':
+        return `Atraso Leve (${temporadaAtual?.penalidadeAtraso1 || 0} pts)`;
+      case 'tipo2':
+        return `Atraso Grave (${temporadaAtual?.penalidadeAtraso2 || 0} pts)`;
+      default:
+        return 'Sem atraso';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -129,7 +145,7 @@ const PeladaCreationForm: React.FC<PeladaCreationFormProps> = ({
               <span>Presença dos Jogadores</span>
             </CardTitle>
             <CardDescription>
-              Marque os jogadores que estão presentes na pelada
+              Marque os jogadores que estão presentes na pelada e registre possíveis atrasos
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -140,21 +156,46 @@ const PeladaCreationForm: React.FC<PeladaCreationFormProps> = ({
                 className="flex items-center space-x-2"
               >
                 <UserCheck className="h-4 w-4" />
-                <span>Todos Presentes</span>
+                <span>Marcar Todos Presentes</span>
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {jogadoresPresentes.map((jogador) => (
-                <div key={jogador.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{jogador.nome}</p>
-                    <p className="text-sm text-muted-foreground">{jogador.tipo}</p>
+                <div key={jogador.id} className="flex items-center justify-between p-4 border rounded-lg bg-white">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <Switch
+                      checked={jogador.presente}
+                      onCheckedChange={() => togglePresenca(jogador.id)}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{jogador.nome}</p>
+                      <p className="text-sm text-muted-foreground">{jogador.tipo}</p>
+                    </div>
+                    
+                    {jogador.presente && (
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Select 
+                          value={jogador.atraso || 'nenhum'} 
+                          onValueChange={(value: 'nenhum' | 'tipo1' | 'tipo2') => setAtrasoJogador(jogador.id, value)}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="nenhum">Sem atraso</SelectItem>
+                            <SelectItem value="tipo1">
+                              {getAtrasoTexto('tipo1')}
+                            </SelectItem>
+                            <SelectItem value="tipo2">
+                              {getAtrasoTexto('tipo2')}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </div>
-                  <Switch
-                    checked={jogador.presente}
-                    onCheckedChange={() => togglePresenca(jogador.id)}
-                  />
                 </div>
               ))}
             </div>
