@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,15 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { CalendarIcon, Users, ArrowRight, UserCheck, Clock } from 'lucide-react';
-import { Temporada, Jogador } from '@/types';
-
-interface JogadorPresente {
-  id: string;
-  nome: string;
-  tipo: string;
-  presente: boolean;
-  atraso: 'nenhum' | 'tipo1' | 'tipo2';
-}
+import { Temporada, Jogador, JogadorPresente } from '@/types';
 
 interface PeladaCreationFormProps {
   temporadas: Temporada[];
