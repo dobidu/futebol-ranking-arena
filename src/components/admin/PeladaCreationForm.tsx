@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, Users, ArrowRight } from 'lucide-react';
+import { CalendarIcon, Users, ArrowRight, UserCheck } from 'lucide-react';
 import { Temporada, Jogador } from '@/types';
 
 interface JogadorPresente {
@@ -55,6 +55,14 @@ const PeladaCreationForm: React.FC<PeladaCreationFormProps> = ({
 
   const handleCriarPelada = () => {
     criarPelada();
+  };
+
+  const marcarTodosPresentes = () => {
+    jogadoresPresentes.forEach(jogador => {
+      if (!jogador.presente) {
+        togglePresenca(jogador.id);
+      }
+    });
   };
 
   const canProceed = jogadoresPresentes.some(j => j.presente);
@@ -125,6 +133,17 @@ const PeladaCreationForm: React.FC<PeladaCreationFormProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <Button 
+                onClick={marcarTodosPresentes}
+                variant="outline"
+                className="flex items-center space-x-2"
+              >
+                <UserCheck className="h-4 w-4" />
+                <span>Todos Presentes</span>
+              </Button>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {jogadoresPresentes.map((jogador) => (
                 <div key={jogador.id} className="flex items-center justify-between p-3 border rounded-lg">

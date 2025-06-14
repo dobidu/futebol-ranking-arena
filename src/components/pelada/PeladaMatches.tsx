@@ -48,6 +48,7 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
         <div className="space-y-4">
           {partidas?.map((partida, index) => {
             console.log('PeladaMatches - Renderizando partida:', partida);
+            console.log('PeladaMatches - Eventos da partida:', partida.eventos);
             
             const timeA = times.find(t => 
               t.jogadores.length === partida.timeA.length && 
@@ -64,6 +65,10 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
             const placarA = partida.placarA || 0;
             const placarB = partida.placarB || 0;
             
+            // Garantir que todos os eventos sejam exibidos
+            const todosEventos = partida.eventos || [];
+            console.log('PeladaMatches - Total de eventos para exibir:', todosEventos.length);
+            
             return (
               <div key={partida.id} className="border rounded-lg p-4 bg-gradient-to-r from-green-50 to-blue-50">
                 <div className="text-center mb-4">
@@ -79,18 +84,19 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
                   </div>
                 </div>
                 
-                {partida.eventos && partida.eventos.length > 0 && (
+                {todosEventos.length > 0 && (
                   <div className="bg-white rounded-lg p-3 border">
                     <h4 className="font-medium text-sm mb-3 flex items-center">
                       <Clock className="h-4 w-4 mr-2 text-primary" />
-                      Eventos da Partida ({partida.eventos.length})
+                      Eventos da Partida ({todosEventos.length})
                     </h4>
-                    <ScrollArea className="max-h-64">
+                    <ScrollArea className="max-h-96 w-full">
                       <div className="space-y-2 pr-4">
-                        {partida.eventos.map((evento, eventIndex) => {
-                          console.log('PeladaMatches - Renderizando evento:', evento);
+                        {todosEventos.map((evento, eventIndex) => {
+                          console.log('PeladaMatches - Renderizando evento:', evento, 'Index:', eventIndex);
+                          const eventoKey = `${partida.id}-${evento.id}-${eventIndex}`;
                           return (
-                            <div key={`${evento.id}-${eventIndex}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div key={eventoKey} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                               <div className="flex items-center space-x-3">
                                 <EventIcon tipo={evento.tipo} />
                                 <div>
@@ -116,6 +122,12 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
                         })}
                       </div>
                     </ScrollArea>
+                  </div>
+                )}
+                
+                {todosEventos.length === 0 && (
+                  <div className="bg-white rounded-lg p-3 border text-center text-sm text-muted-foreground">
+                    Nenhum evento registrado nesta partida
                   </div>
                 )}
               </div>

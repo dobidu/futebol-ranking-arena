@@ -57,9 +57,14 @@ export const usePeladaCreation = ({
     }
 
     try {
+      // Corrigir o problema de data - criar data corretamente sem problemas de timezone
+      const dataCorrigida = new Date(dataPelada + 'T12:00:00.000Z');
+      console.log('usePeladaCreation - Data selecionada:', dataPelada);
+      console.log('usePeladaCreation - Data corrigida para salvar:', dataCorrigida);
+
       const novaPelada = {
         id: crypto.randomUUID(),
-        data: new Date(dataPelada),
+        data: dataCorrigida,
         temporadaId: selectedTemporada,
         partidas: [],
         presencas: [],

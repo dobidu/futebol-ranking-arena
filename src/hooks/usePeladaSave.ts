@@ -110,13 +110,17 @@ export const usePeladaSave = ({
         };
       });
 
-      // Preservar a data original usando apenas o valor de data sem conversões de timezone
-      const dataOriginal = new Date(pelada.data);
-      console.log('usePeladaSave - Data original preservada:', dataOriginal);
+      // Corrigir o problema de data - preservar a data selecionada sem conversão de timezone
+      const dataOriginalString = pelada.data instanceof Date 
+        ? pelada.data.toISOString().split('T')[0] 
+        : pelada.data.toString().split('T')[0];
+      
+      const dataCorrigida = new Date(dataOriginalString + 'T12:00:00.000Z');
+      console.log('usePeladaSave - Data corrigida:', dataCorrigida);
 
       const peladaAtualizada = {
         ...pelada,
-        data: dataOriginal, // Manter a data exata original
+        data: dataCorrigida,
         partidas: partidasFormatadas,
         presencas: presencasAtualizadas,
         jogadoresPresentes: jogadoresPresentes.filter(j => j.presente)
