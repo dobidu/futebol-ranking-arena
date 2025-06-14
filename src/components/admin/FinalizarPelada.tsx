@@ -58,25 +58,25 @@ const FinalizarPelada: React.FC<FinalizarPeladaProps> = ({
 }) => {
   const jogadoresCount = jogadoresPresentes.filter(j => j.presente).length;
   
-  // Calcular gols total: somar placares das partidas + eventos de gol
-  const golsTotalPlacar = partidas.reduce((total, partida) => {
-    const golsA = partida.placarA || 0;
-    const golsB = partida.placarB || 0;
-    console.log('FinalizarPelada - Calculando gols da partida:', { partidaId: partida.id, golsA, golsB });
+  // Calcular gols corretamente dos placares das partidas
+  const golsTotal = partidas.reduce((total, partida) => {
+    const golsA = Number(partida.placarA) || 0;
+    const golsB = Number(partida.placarB) || 0;
+    console.log('FinalizarPelada - Partida gols:', { 
+      partidaId: partida.id, 
+      placarA: partida.placarA, 
+      placarB: partida.placarB, 
+      golsA, 
+      golsB 
+    });
     return total + golsA + golsB;
   }, 0);
   
-  const golsTotalEventos = eventos.filter(e => e.tipo === 'gol').length;
-  
-  // Usar o maior dos dois (placar ou eventos) como referência
-  const golsTotal = Math.max(golsTotalPlacar, golsTotalEventos);
-  
-  console.log('FinalizarPelada - Totais calculados:', { 
-    golsTotalPlacar, 
-    golsTotalEventos, 
-    golsTotal,
+  console.log('FinalizarPelada - Total de gols calculado:', golsTotal);
+  console.log('FinalizarPelada - Dados recebidos:', { 
     partidas: partidas.length,
-    eventos: eventos.length 
+    eventos: eventos.length,
+    jogadores: jogadoresCount 
   });
 
   return (

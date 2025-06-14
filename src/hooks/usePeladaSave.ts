@@ -60,7 +60,7 @@ export const usePeladaSave = ({
       }
 
       console.log('usePeladaSave - Salvando pelada:', pelada);
-      console.log('usePeladaSave - Data original:', pelada.data);
+      console.log('usePeladaSave - Data original da pelada:', pelada.data);
       console.log('usePeladaSave - Partidas:', partidas);
       console.log('usePeladaSave - Eventos:', eventos);
 
@@ -74,35 +74,55 @@ export const usePeladaSave = ({
           atraso: 'nenhum' as const
         }));
 
-      const partidasFormatadas = partidas.map(p => ({
-        id: p.id,
-        peladaId: p.peladaId,
-        numeroPartida: partidas.indexOf(p) + 1,
-        timeA: p.timeA?.jogadores || [],
-        timeB: p.timeB?.jogadores || [],
-        golsTimeA: p.placarA,
-        golsTimeB: p.placarB,
-        placarA: p.placarA,
-        placarB: p.placarB,
-        eventos: eventos
-          .filter(e => eventos.some(ev => ev.id === e.id))
+      const partidasFormatadas = partidas.map((p, index) => {
+        const eventosPartida = eventos
+          .filter(e => {
+            // Associar eventos por índice da partida ou por timeA/timeB
+            const isEventoPartida = p.timeA?.jogadores?.includes(e.jogadorId) || 
+                                   p.timeB?.jogadores?.includes(e.jogadorId);
+            console.log('usePeladaSave - Verificando evento para partida:', { 
+              partidaIndex: index, 
+              eventoId: e.id, 
+              jogadorId: e.jogadorId, 
+              isEventoPartida 
+            });
+            return isEventoPartida;
+          })
           .map(e => ({
             ...e,
             partidaId: p.id,
             minuto: 0
-          }))
-      }));
+          }));
 
-      // Preservar a data original sem alterações de timezone
+        console.log('usePeladaSave - Eventos da partida', index + 1, ':', eventosPartida);
+
+        return {
+          id: p.id,
+          peladaId: p.peladaId,
+          numeroPartida: index + 1,
+          timeA: p.timeA?.jogadores || [],
+          timeB: p.timeB?.jogadores || [],
+          golsTimeA: p.placarA,
+          golsTimeB: p.placarB,
+          placarA: p.placarA,
+          placarB: p.placarB,
+          eventos: eventosPartida
+        };
+      });
+
+      // Preservar a data original usando apenas o valor de data sem conversões de timezone
+      const dataOriginal = new Date(pelada.data);
+      console.log('usePeladaSave - Data original preservada:', dataOriginal);
+
       const peladaAtualizada = {
         ...pelada,
-        data: pelada.data, // Manter a data original sem conversões
+        data: dataOriginal, // Manter a data exata original
         partidas: partidasFormatadas,
         presencas: presencasAtualizadas,
         jogadoresPresentes: jogadoresPresentes.filter(j => j.presente)
       };
 
-      console.log('usePeladaSave - Pelada atualizada:', peladaAtualizada);
+      console.log('usePeladaSave - Pelada atualizada final:', peladaAtualizada);
 
       peladaService.update(peladaAtual, peladaAtualizada);
 
@@ -113,7 +133,6 @@ export const usePeladaSave = ({
 
       resetStates();
 
-      // Navegar automaticamente para a aba "nova-pelada"
       if (onTabChange) {
         onTabChange('nova-pelada');
       }
