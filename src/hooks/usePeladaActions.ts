@@ -3,14 +3,7 @@ import { usePeladaCreation } from './usePeladaCreation';
 import { useTeamManagement } from './useTeamManagement';
 import { useMatchManagement } from './useMatchManagement';
 import { usePeladaSave } from './usePeladaSave';
-import { TimeNaPelada, Partida, Jogador } from '@/types';
-
-interface JogadorPresente {
-  id: string;
-  nome: string;
-  tipo: string;
-  presente: boolean;
-}
+import { TimeNaPelada, Partida, Jogador, JogadorPresente } from '@/types';
 
 interface EventoPartida {
   id: string;

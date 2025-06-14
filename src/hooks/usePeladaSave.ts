@@ -1,15 +1,7 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { peladaService } from '@/services/dataService';
-import { TimeNaPelada, Partida } from '@/types';
-
-interface JogadorPresente {
-  id: string;
-  nome: string;
-  tipo: string;
-  presente: boolean;
-}
+import { TimeNaPelada, Partida, JogadorPresente } from '@/types';
 
 interface EventoPartida {
   id: string;
@@ -116,7 +108,8 @@ export const usePeladaSave = ({
         const dataString = pelada.data.toISOString().split('T')[0];
         dataCorrigida = new Date(dataString + 'T12:00:00.000Z');
       } else {
-        const dataString = String(pelada.data).split('T')[0];
+        const dataOriginal = pelada.data as any;
+        const dataString = dataOriginal.split ? dataOriginal.split('T')[0] : pelada.data;
         dataCorrigida = new Date(dataString + 'T12:00:00.000Z');
       }
       

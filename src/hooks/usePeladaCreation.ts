@@ -1,15 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { peladaService } from '@/services/dataService';
-import { Jogador } from '@/types';
-
-interface JogadorPresente {
-  id: string;
-  nome: string;
-  tipo: string;
-  presente: boolean;
-  atraso: 'nenhum' | 'tipo1' | 'tipo2';
-}
+import { Jogador, JogadorPresente } from '@/types';
 
 interface EventoPartida {
   id: string;
