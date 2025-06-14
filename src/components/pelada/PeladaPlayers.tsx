@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users } from 'lucide-react';
+import { Users, Clock } from 'lucide-react';
 import { Pelada, TimeNaPelada, Jogador } from '@/types';
 
 interface PeladaPlayersProps {
@@ -19,6 +19,28 @@ const PeladaPlayers: React.FC<PeladaPlayersProps> = ({
   jogadores, 
   jogadoresPresentes 
 }) => {
+  const getAtrasoTexto = (atraso: string) => {
+    switch (atraso) {
+      case 'tipo1':
+        return 'Atraso Leve';
+      case 'tipo2':
+        return 'Atraso Grave';
+      default:
+        return null;
+    }
+  };
+
+  const getAtrasoVariant = (atraso: string) => {
+    switch (atraso) {
+      case 'tipo1':
+        return 'secondary' as const;
+      case 'tipo2':
+        return 'destructive' as const;
+      default:
+        return 'default' as const;
+    }
+  };
+
   return (
     <>
       {jogadoresPresentes > 0 && (
@@ -34,25 +56,45 @@ const PeladaPlayers: React.FC<PeladaPlayersProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {/* Exibir jogadores presentes */}
               {pelada.jogadoresPresentes ? 
-                pelada.jogadoresPresentes.filter(j => j.presente).map((jogadorPresente, index) => (
-                  <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-                    <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
-                      <div className="font-medium text-sm">{jogadorPresente.nome}</div>
-                      <Badge variant="default" className="text-xs mt-1">
-                        {jogadorPresente.tipo}
-                      </Badge>
-                    </Link>
-                  </div>
-                )) :
+                pelada.jogadoresPresentes.filter(j => j.presente).map((jogadorPresente, index) => {
+                  const atrasoTexto = getAtrasoTexto(jogadorPresente.atraso || 'nenhum');
+                  return (
+                    <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                      <Link to={`/jogador/${jogadorPresente.id}`} className="hover:underline">
+                        <div className="font-medium text-sm">{jogadorPresente.nome}</div>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <Badge variant="default" className="text-xs">
+                            {jogadorPresente.tipo}
+                          </Badge>
+                          {atrasoTexto && (
+                            <Badge variant={getAtrasoVariant(jogadorPresente.atraso || 'nenhum')} className="text-xs flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {atrasoTexto}
+                            </Badge>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                }) :
                 pelada.presencas?.filter(p => p.presente).map((presenca, index) => {
                   const jogador = jogadores.find(j => j.id === presenca.jogadorId);
+                  const atrasoTexto = getAtrasoTexto(presenca.atraso);
                   return (
                     <div key={index} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
                       <Link to={`/jogador/${presenca.jogadorId}`} className="hover:underline">
                         <div className="font-medium text-sm">{jogador?.nome || 'Jogador não encontrado'}</div>
-                        <Badge variant="default" className="text-xs mt-1">
-                          Presente{presenca.atraso !== 'nenhum' && ` (${presenca.atraso})`}
-                        </Badge>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <Badge variant="default" className="text-xs">
+                            Presente
+                          </Badge>
+                          {atrasoTexto && (
+                            <Badge variant={getAtrasoVariant(presenca.atraso)} className="text-xs flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {atrasoTexto}
+                            </Badge>
+                          )}
+                        </div>
                       </Link>
                     </div>
                   );
