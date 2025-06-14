@@ -111,11 +111,15 @@ export const usePeladaSave = ({
       });
 
       // Corrigir o problema de data - preservar a data selecionada sem conversão de timezone
-      const dataOriginalString = pelada.data instanceof Date 
-        ? pelada.data.toISOString().split('T')[0] 
-        : pelada.data.toString().split('T')[0];
+      let dataCorrigida: Date;
+      if (pelada.data instanceof Date) {
+        const dataString = pelada.data.toISOString().split('T')[0];
+        dataCorrigida = new Date(dataString + 'T12:00:00.000Z');
+      } else {
+        const dataString = String(pelada.data).split('T')[0];
+        dataCorrigida = new Date(dataString + 'T12:00:00.000Z');
+      }
       
-      const dataCorrigida = new Date(dataOriginalString + 'T12:00:00.000Z');
       console.log('usePeladaSave - Data corrigida:', dataCorrigida);
 
       const peladaAtualizada = {
