@@ -36,14 +36,21 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const placarA = partida.placarA ?? partida.golsTimeA ?? 0;
   const placarB = partida.placarB ?? partida.golsTimeB ?? 0;
   
-  // FILTRAR RIGOROSAMENTE apenas eventos desta partida específica
-  const eventosEspecificosDaPartida = (partida.eventos || []).filter(evento => {
-    // Garantir que o evento pertence exatamente a esta partida
-    return evento.partidaId === partida.id;
+  // Filtrar eventos APENAS desta partida específica usando o partidaId correto
+  const eventosDestaPartida = (partida.eventos || []).filter(evento => {
+    // Garantir correspondência exata entre evento.partidaId e partida.id
+    const eventoPerteceAEstaPartida = evento.partidaId === partida.id;
+    
+    console.log(`MatchCard - Verificando evento ${evento.id}:`);
+    console.log(`  - evento.partidaId: ${evento.partidaId}`);
+    console.log(`  - partida.id: ${partida.id}`);
+    console.log(`  - pertence: ${eventoPerteceAEstaPartida}`);
+    
+    return eventoPerteceAEstaPartida;
   });
 
-  console.log(`MatchCard - Partida ${partida.id}: ${eventosEspecificosDaPartida.length} eventos filtrados especificamente para esta partida`);
-  console.log(`MatchCard - Eventos desta partida:`, eventosEspecificosDaPartida);
+  console.log(`MatchCard - Partida ${partida.id} (${index + 1}): ${eventosDestaPartida.length} eventos corretos`);
+  console.log(`MatchCard - Eventos corretos da partida:`, eventosDestaPartida);
 
   return (
     <div className="border rounded-lg p-6 bg-gradient-to-r from-green-50 to-blue-50">
@@ -89,7 +96,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
       </div>
       
       <MatchEvents 
-        eventos={eventosEspecificosDaPartida}
+        eventos={eventosDestaPartida}
         partida={partida}
         getJogadorNome={getJogadorNome}
       />

@@ -32,17 +32,13 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
     }
   };
 
-  // DUPLO FILTRO para garantir que só exibimos eventos desta partida específica
-  const eventosDestaPartida = eventos.filter(evento => {
-    const pertenceAEstaPartida = evento.partidaId === partida.id;
-    console.log(`MatchEvents - Evento ${evento.id}: partidaId=${evento.partidaId}, partida.id=${partida.id}, pertence=${pertenceAEstaPartida}`);
-    return pertenceAEstaPartida;
-  });
+  // Os eventos já vêm filtrados do MatchCard, não precisa filtrar novamente
+  const eventosParaExibir = eventos;
 
-  console.log(`MatchEvents - Partida ${partida.id}: recebeu ${eventos.length} eventos, filtrou para ${eventosDestaPartida.length} eventos específicos`);
-  console.log(`MatchEvents - Eventos filtrados para partida ${partida.id}:`, eventosDestaPartida);
+  console.log(`MatchEvents - Partida ${partida.id}: recebeu ${eventosParaExibir.length} eventos para exibição`);
+  console.log(`MatchEvents - Eventos para exibir:`, eventosParaExibir);
 
-  if (eventosDestaPartida.length === 0) {
+  if (eventosParaExibir.length === 0) {
     return (
       <div className="bg-white rounded-lg p-4 border text-center text-sm text-muted-foreground">
         Nenhum evento registrado nesta partida
@@ -54,13 +50,13 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
     <div className="bg-white rounded-lg p-4 border">
       <h4 className="font-medium text-lg mb-4 flex items-center">
         <Clock className="h-5 w-5 mr-2 text-primary" />
-        Eventos da Partida ({eventosDestaPartida.length})
+        Eventos da Partida ({eventosParaExibir.length})
       </h4>
       
       <div className="space-y-2">
-        {eventosDestaPartida.map((evento, eventIndex) => {
-          // Chave única que inclui o partidaId para evitar duplicações
-          const eventoKey = `partida-${partida.id}-evento-${evento.id}-${eventIndex}`;
+        {eventosParaExibir.map((evento, eventIndex) => {
+          // Chave única específica para esta partida
+          const eventoKey = `partida-${partida.id}-evento-${evento.id}-index-${eventIndex}`;
           const isGol = evento.tipo === 'gol';
           const isCartao = ['cartao_amarelo', 'cartao_azul', 'cartao_vermelho'].includes(evento.tipo);
           
