@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +9,11 @@ import PeladaMatches from '@/components/pelada/PeladaMatches';
 import PeladaPlayers from '@/components/pelada/PeladaPlayers';
 import { TimeNaPelada } from '@/types';
 
-const PeladaDetail: React.FC = () => {
+interface PeladaDetailProps {
+  isAdmin?: boolean;
+}
+
+const PeladaDetail: React.FC<PeladaDetailProps> = ({ isAdmin = false }) => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const isAdminRoute = location.pathname.includes('/admin/');
@@ -140,6 +143,7 @@ const PeladaDetail: React.FC = () => {
         pelada={pelada}
         temporada={temporada}
         isAdminRoute={isAdminRoute}
+        isAdmin={isAdmin}
         backUrl={backUrl}
         totalPartidas={stats.totalPartidas}
       />

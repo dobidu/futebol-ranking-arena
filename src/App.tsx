@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -62,13 +63,13 @@ function App() {
             <Route path="/jogador/:id" element={<PlayerProfile />} />
             <Route path="/temporadas" element={<Seasons />} />
             <Route path="/temporada/:id" element={<SeasonDetail />} />
-            <Route path="/pelada/:id" element={<PeladaDetail />} />
+            <Route path="/pelada/:id" element={<PeladaDetail isAdmin={isAdmin} />} />
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/jogadores" element={<AdminPlayers />} />
             <Route path="/admin/temporadas" element={<AdminSeasons />} />
             <Route path="/admin/temporadas/:id" element={<SeasonDetail />} />
-            <Route path="/admin/pelada/:id" element={<PeladaDetail />} />
+            <Route path="/admin/pelada/:id" element={<PeladaDetail isAdmin={isAdmin} />} />
             <Route path="/admin/peladas" element={<AdminPeladas />} />
             <Route path="/admin/peladas/editar/:id" element={<AdminPeladas />} />
             <Route path="/admin/pelada/:id/editar" element={<EditPeladaPage />} />

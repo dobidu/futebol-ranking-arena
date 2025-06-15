@@ -9,6 +9,7 @@ interface PeladaHeaderProps {
   pelada: Pelada;
   temporada?: Temporada;
   isAdminRoute: boolean;
+  isAdmin?: boolean;
   backUrl: string;
   totalPartidas: number;
 }
@@ -17,6 +18,7 @@ const PeladaHeader: React.FC<PeladaHeaderProps> = ({
   pelada,
   temporada,
   isAdminRoute,
+  isAdmin = false,
   backUrl,
   totalPartidas
 }) => {
@@ -31,7 +33,7 @@ const PeladaHeader: React.FC<PeladaHeaderProps> = ({
           </Button>
         </Link>
         
-        {isAdminRoute && (
+        {isAdmin && (
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Link to={`/admin/pelada/${pelada.id}/editar`} className="w-full sm:w-auto">
               <Button variant="outline" size="sm" className="w-full sm:w-auto">
@@ -39,12 +41,14 @@ const PeladaHeader: React.FC<PeladaHeaderProps> = ({
                 Editar Dados
               </Button>
             </Link>
-            <Link to={`/admin/peladas/editar/${pelada.id}`} className="w-full sm:w-auto">
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                <Edit className="h-4 w-4 mr-2" />
-                Recriar Pelada
-              </Button>
-            </Link>
+            {isAdminRoute && (
+              <Link to={`/admin/peladas/editar/${pelada.id}`} className="w-full sm:w-auto">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Recriar Pelada
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </div>
