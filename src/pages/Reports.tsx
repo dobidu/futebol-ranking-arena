@@ -64,19 +64,19 @@ const Reports: React.FC = () => {
         </TabsList>
 
         <TabsContent value="geral">
-          <ReportsGeneralTab temporadaId={selectedTemporada} />
+          <ReportsGeneralTab temporada={selectedTemporada} />
         </TabsContent>
 
         <TabsContent value="evolucao">
-          <ReportsEvolutionTab temporadaId={selectedTemporada} />
+          <ReportsEvolutionTab temporada={selectedTemporada} />
         </TabsContent>
 
         <TabsContent value="parcerias">
-          <ReportsPartnershipsTab temporadaId={selectedTemporada} />
+          <ReportsPartnershipsTab temporada={selectedTemporada} />
         </TabsContent>
 
         <TabsContent value="disciplina">
-          <ReportsDisciplineTab temporadaId={selectedTemporada} />
+          <ReportsDisciplineTab temporada={selectedTemporada} />
         </TabsContent>
       </Tabs>
     </div>

@@ -49,28 +49,28 @@ const Rankings: React.FC = () => {
 
         <TabsContent value="geral">
           <RankingTable 
-            temporadaId={selectedTemporada} 
+            temporada={selectedTemporada} 
             tipo="geral"
           />
         </TabsContent>
 
         <TabsContent value="artilheiros">
           <RankingTable 
-            temporadaId={selectedTemporada} 
+            temporada={selectedTemporada} 
             tipo="artilheiros"
           />
         </TabsContent>
 
         <TabsContent value="assistencias">
           <RankingTable 
-            temporadaId={selectedTemporada} 
+            temporada={selectedTemporada} 
             tipo="assistencias"
           />
         </TabsContent>
 
         <TabsContent value="disciplina">
           <RankingTable 
-            temporadaId={selectedTemporada} 
+            temporada={selectedTemporada} 
             tipo="disciplina"
           />
         </TabsContent>
