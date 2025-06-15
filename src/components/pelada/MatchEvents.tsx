@@ -33,7 +33,7 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
   };
 
   // Garantir que só exibimos eventos desta partida específica
-  const eventosDestaPart ida = eventos.filter(evento => evento.partidaId === partida.id);
+  const eventosDestaPartida = eventos.filter(evento => evento.partidaId === partida.id);
 
   console.log(`MatchEvents - Partida ${partida.id}: exibindo ${eventosDestaPartida.length} eventos`);
 
