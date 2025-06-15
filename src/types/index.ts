@@ -128,6 +128,8 @@ export interface RankingJogador {
   cartoesAmarelos: number;
   cartoesAzuis: number;
   cartoesVermelhos: number;
+  atrasosTipo1: number;
+  atrasosTipo2: number;
   mediaPresenca: number;
   posicao: number;
 }

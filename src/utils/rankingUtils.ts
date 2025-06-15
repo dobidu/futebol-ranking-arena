@@ -16,7 +16,9 @@ export const criarItemRanking = (
   pontuacaoTotal: number,
   vitorias: number,
   presencas: number,
-  eventStats: any
+  eventStats: any,
+  atrasosTipo1: number = 0,
+  atrasosTipo2: number = 0
 ): RankingJogador => {
   return {
     jogador,
@@ -28,6 +30,8 @@ export const criarItemRanking = (
     cartoesAmarelos: eventStats.cartoesAmarelos,
     cartoesAzuis: eventStats.cartoesAzuis,
     cartoesVermelhos: eventStats.cartoesVermelhos,
+    atrasosTipo1,
+    atrasosTipo2,
     mediaPresenca: presencas > 0 ? pontuacaoTotal / presencas : 0,
     posicao: 0
   };

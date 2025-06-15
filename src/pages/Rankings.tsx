@@ -37,6 +37,9 @@ const Rankings: React.FC = () => {
   const artilheiroData = [...rankingData].sort((a, b) => b.gols - a.gols);
   const assistenciaData = [...rankingData].sort((a, b) => b.assistencias - a.assistencias);
 
+  // Buscar dados da temporada selecionada
+  const temporadaSelecionada = temporadas.find(t => t.id === selectedTemporada);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -84,11 +87,15 @@ const Rankings: React.FC = () => {
                 <span>Ranking Geral</span>
               </CardTitle>
               <CardDescription>
-                Classificação baseada na pontuação total, considerando vitórias, presenças e descartes
+                Classificação baseada na pontuação total, considerando vitórias, empates, derrotas, presenças, cartões e atrasos
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RankingTable data={rankingData} type="geral" />
+              <RankingTable 
+                data={rankingData} 
+                type="geral" 
+                temporada={temporadaSelecionada}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -105,7 +112,11 @@ const Rankings: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RankingTable data={artilheiroData} type="artilharia" />
+              <RankingTable 
+                data={artilheiroData} 
+                type="artilharia" 
+                temporada={temporadaSelecionada}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -122,7 +133,11 @@ const Rankings: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RankingTable data={assistenciaData} type="assistencia" />
+              <RankingTable 
+                data={assistenciaData} 
+                type="assistencia" 
+                temporada={temporadaSelecionada}
+              />
             </CardContent>
           </Card>
         </TabsContent>

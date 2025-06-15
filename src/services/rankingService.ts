@@ -37,6 +37,8 @@ export const calcularRanking = (temporadaId?: string): RankingJogador[] => {
     let pontuacaoTotal = 0;
     let presencas = 0;
     let vitorias = 0;
+    let atrasosTipo1 = 0;
+    let atrasosTipo2 = 0;
     let eventStatsTotal = {
       gols: 0,
       assistencias: 0,
@@ -56,9 +58,21 @@ export const calcularRanking = (temporadaId?: string): RankingJogador[] => {
         presencas++;
         pontuacaoTotal += 1; // Ponto por presença
         
-        // Calcular penalidade de atraso
+        // Calcular penalidade de atraso e contar atrasos
         const penalidadeAtraso = calcularPenalidadeAtraso(pelada, jogador, temporadaSelecionada);
         pontuacaoTotal += penalidadeAtraso;
+
+        // Contar tipos de atraso
+        if (pelada.presencas) {
+          const presenca = pelada.presencas.find(p => p.jogadorId === jogador.id);
+          if (presenca && presenca.presente) {
+            if (presenca.atraso === 'tipo1') {
+              atrasosTipo1++;
+            } else if (presenca.atraso === 'tipo2') {
+              atrasosTipo2++;
+            }
+          }
+        }
 
         // Processar partidas se jogador esteve presente
         if (pelada.partidas && pelada.partidas.length > 0) {
@@ -90,7 +104,9 @@ export const calcularRanking = (temporadaId?: string): RankingJogador[] => {
         pontuacaoTotal,
         vitorias,
         presencas,
-        eventStatsTotal
+        eventStatsTotal,
+        atrasosTipo1,
+        atrasosTipo2
       );
       ranking.push(itemRanking);
     }
