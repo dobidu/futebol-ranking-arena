@@ -32,10 +32,13 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
     }
   };
 
-  console.log(`MatchEvents - Partida ${partida.id}: Exibindo ${eventos.length} eventos`);
-  console.log(`MatchEvents - Eventos para exibição:`, eventos);
+  // Garantir que estamos mostrando apenas eventos desta partida específica
+  const eventosCorretos = eventos.filter(evento => evento.partidaId === partida.id);
 
-  if (eventos.length === 0) {
+  console.log(`MatchEvents - Partida ${partida.id}: ${eventosCorretos.length} eventos corretos para exibição`);
+  console.log(`MatchEvents - Eventos corretos:`, eventosCorretos);
+
+  if (eventosCorretos.length === 0) {
     return (
       <div className="bg-white rounded-lg p-4 border text-center text-sm text-muted-foreground">
         Nenhum evento registrado nesta partida
@@ -47,13 +50,13 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
     <div className="bg-white rounded-lg p-4 border">
       <h4 className="font-medium text-lg mb-4 flex items-center">
         <Clock className="h-5 w-5 mr-2 text-primary" />
-        Eventos da Partida ({eventos.length})
+        Eventos da Partida ({eventosCorretos.length})
       </h4>
       
       <div className="space-y-2">
-        {eventos.map((evento, eventIndex) => {
+        {eventosCorretos.map((evento, eventIndex) => {
           // Chave única específica para esta partida
-          const eventoKey = `match-${partida.id}-event-${evento.id}-${eventIndex}`;
+          const eventoKey = `partida-${partida.id}-evento-${evento.id}-${eventIndex}`;
           const isGol = evento.tipo === 'gol';
           const isCartao = ['cartao_amarelo', 'cartao_azul', 'cartao_vermelho'].includes(evento.tipo);
           
