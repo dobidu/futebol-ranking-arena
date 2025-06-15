@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { RankingJogador } from '@/types';
 
 interface ReportsDisciplineTabProps {
@@ -55,11 +55,19 @@ const ReportsDisciplineTab: React.FC<ReportsDisciplineTabProps> = ({ ranking }) 
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <PieChart data={dadosCartoes} dataKey="valor" cx="50%" cy="50%" outerRadius={80}>
+                    <Pie 
+                      data={dadosCartoes} 
+                      dataKey="valor" 
+                      cx="50%" 
+                      cy="50%" 
+                      outerRadius={80}
+                      labelLine={false}
+                      label={({ nome, valor }) => `${nome}: ${valor}`}
+                    >
                       {dadosCartoes.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.cor} />
                       ))}
-                    </PieChart>
+                    </Pie>
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>

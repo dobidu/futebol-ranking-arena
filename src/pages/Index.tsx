@@ -44,6 +44,55 @@ const Index: React.FC = () => {
   const artilheiro = ranking.length > 0 ? [...ranking].sort((a, b) => b.gols - a.gols)[0] : null;
   const assistente = ranking.length > 0 ? [...ranking].sort((a, b) => b.assistencias - a.assistencias)[0] : null;
 
+  // Calcular pelada com mais gols
+  const peladaComMaisGols = peladasTemporadaAtiva.length > 0 ? 
+    peladasTemporadaAtiva.reduce((maxPelada, pelada) => {
+      const golsPelada = pelada.partidas?.reduce((total, partida) => {
+        return total + (partida.placarA || 0) + (partida.placarB || 0);
+      }, 0) || 0;
+      
+      const golsMaxPelada = maxPelada.partidas?.reduce((total, partida) => {
+        return total + (partida.placarA || 0) + (partida.placarB || 0);
+      }, 0) || 0;
+      
+      return golsPelada > golsMaxPelada ? pelada : maxPelada;
+    }) : null;
+
+  // Calcular pelada com mais cartões
+  const peladaComMaisCartoes = peladasTemporadaAtiva.length > 0 ?
+    peladasTemporadaAtiva.reduce((maxPelada, pelada) => {
+      const cartoesPelada = pelada.partidas?.reduce((total, partida) => {
+        return total + (partida.eventos?.filter(e => 
+          e.tipo === 'cartao_amarelo' || e.tipo === 'cartao_azul' || e.tipo === 'cartao_vermelho'
+        ).length || 0);
+      }, 0) || 0;
+      
+      const cartoesMaxPelada = maxPelada.partidas?.reduce((total, partida) => {
+        return total + (partida.eventos?.filter(e => 
+          e.tipo === 'cartao_amarelo' || e.tipo === 'cartao_azul' || e.tipo === 'cartao_vermelho'
+        ).length || 0);
+      }, 0) || 0;
+      
+      return cartoesPelada > cartoesMaxPelada ? pelada : maxPelada;
+    }) : null;
+
+  // Preparar dados das estatísticas especiais
+  const statsPeladaMaisGols = peladaComMaisGols ? {
+    nome: peladaComMaisGols.nome || `Pelada ${new Date(peladaComMaisGols.data).toLocaleDateString('pt-BR')}`,
+    gols: peladaComMaisGols.partidas?.reduce((total, partida) => total + (partida.placarA || 0) + (partida.placarB || 0), 0) || 0,
+    data: new Date(peladaComMaisGols.data).toLocaleDateString('pt-BR')
+  } : undefined;
+
+  const statsPeladaMaisCartoes = peladaComMaisCartoes ? {
+    nome: peladaComMaisCartoes.nome || `Pelada ${new Date(peladaComMaisCartoes.data).toLocaleDateString('pt-BR')}`,
+    cartoes: peladaComMaisCartoes.partidas?.reduce((total, partida) => {
+      return total + (partida.eventos?.filter(e => 
+        e.tipo === 'cartao_amarelo' || e.tipo === 'cartao_azul' || e.tipo === 'cartao_vermelho'
+      ).length || 0);
+    }, 0) || 0,
+    data: new Date(peladaComMaisCartoes.data).toLocaleDateString('pt-BR')
+  } : undefined;
+
   console.log('Index - Temporada ativa:', temporadaAtiva);
   console.log('Index - Ranking:', ranking);
   console.log('Index - Peladas da temporada:', peladasTemporadaAtiva);
@@ -57,6 +106,8 @@ const Index: React.FC = () => {
         peladasTemporadaAtiva={peladasTemporadaAtiva.length}
         totalGols={totalGols}
         totalTemporadas={temporadas.length}
+        peladaComMaisGols={statsPeladaMaisGols}
+        peladaComMaisCartoes={statsPeladaMaisCartoes}
       />
 
       {ultimaPelada && (
