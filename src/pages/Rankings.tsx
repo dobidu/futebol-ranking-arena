@@ -1,11 +1,10 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Target, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { temporadaService, calcularRanking } from '@/services/dataService';
-import RankingTable from '@/components/rankings/RankingTable';
+import { temporadaService } from '@/services/dataService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SeasonSelector from '@/components/rankings/SeasonSelector';
+import RankingTable from '@/components/rankings/RankingTable';
 
 const Rankings: React.FC = () => {
   const [selectedTemporada, setSelectedTemporada] = useState<string>('');
@@ -15,131 +14,65 @@ const Rankings: React.FC = () => {
     queryFn: temporadaService.getAll,
   });
 
+  // Selecionar temporada ativa por padrão
   React.useEffect(() => {
     if (temporadas.length > 0 && !selectedTemporada) {
       const temporadaAtiva = temporadas.find(t => t.ativa);
-      setSelectedTemporada(temporadaAtiva?.id || temporadas[0].id);
+      if (temporadaAtiva) {
+        setSelectedTemporada(temporadaAtiva.id);
+      } else {
+        setSelectedTemporada(temporadas[0].id);
+      }
     }
   }, [temporadas, selectedTemporada]);
 
-  const { data: rankingData = [] } = useQuery({
-    queryKey: ['ranking', selectedTemporada],
-    queryFn: () => {
-      if (!selectedTemporada) return [];
-      return calcularRanking(selectedTemporada === 'all' ? undefined : selectedTemporada);
-    },
-    enabled: !!selectedTemporada,
-  });
-
-  console.log('Rankings - Temporada selecionada:', selectedTemporada);
-  console.log('Rankings - Dados do ranking:', rankingData);
-
-  const artilheiroData = [...rankingData].sort((a, b) => b.gols - a.gols);
-  const assistenciaData = [...rankingData].sort((a, b) => b.assistencias - a.assistencias);
-
-  // Buscar dados da temporada selecionada
-  const temporadaSelecionada = temporadas.find(t => t.id === selectedTemporada);
-
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Rankings</h1>
-          <p className="text-muted-foreground">Acompanhe as classificações e estatísticas</p>
-        </div>
-        
-        <SeasonSelector
-          temporadas={temporadas}
-          selectedTemporada={selectedTemporada}
-          onSelectionChange={setSelectedTemporada}
-        />
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Rankings</h1>
+        <p className="text-muted-foreground">Classificações e estatísticas dos jogadores</p>
       </div>
 
-      {rankingData.length === 0 && selectedTemporada && (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Nenhum dado encontrado para esta temporada</p>
-          </CardContent>
-        </Card>
-      )}
+      <SeasonSelector
+        temporadas={temporadas}
+        selectedTemporada={selectedTemporada}
+        onTemporadaChange={setSelectedTemporada}
+      />
 
       <Tabs defaultValue="geral" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="geral" className="flex items-center space-x-2">
-            <Trophy className="h-4 w-4" />
-            <span>Ranking Geral</span>
-          </TabsTrigger>
-          <TabsTrigger value="artilharia" className="flex items-center space-x-2">
-            <Target className="h-4 w-4" />
-            <span>Artilharia</span>
-          </TabsTrigger>
-          <TabsTrigger value="assistencias" className="flex items-center space-x-2">
-            <Users className="h-4 w-4" />
-            <span>Assistências</span>
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="geral">Geral</TabsTrigger>
+          <TabsTrigger value="artilheiros">Artilheiros</TabsTrigger>
+          <TabsTrigger value="assistencias">Assistências</TabsTrigger>
+          <TabsTrigger value="disciplina">Disciplina</TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Trophy className="h-5 w-5" />
-                <span>Ranking Geral</span>
-              </CardTitle>
-              <CardDescription>
-                Classificação baseada na pontuação total, considerando vitórias, empates, derrotas, presenças, cartões e atrasos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RankingTable 
-                data={rankingData} 
-                type="geral" 
-                temporada={temporadaSelecionada}
-              />
-            </CardContent>
-          </Card>
+          <RankingTable 
+            temporadaId={selectedTemporada} 
+            tipo="geral"
+          />
         </TabsContent>
 
-        <TabsContent value="artilharia">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Target className="h-5 w-5" />
-                <span>Ranking de Artilharia</span>
-              </CardTitle>
-              <CardDescription>
-                Maiores goleadores da temporada
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RankingTable 
-                data={artilheiroData} 
-                type="artilharia" 
-                temporada={temporadaSelecionada}
-              />
-            </CardContent>
-          </Card>
+        <TabsContent value="artilheiros">
+          <RankingTable 
+            temporadaId={selectedTemporada} 
+            tipo="artilheiros"
+          />
         </TabsContent>
 
         <TabsContent value="assistencias">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5" />
-                <span>Ranking de Assistências</span>
-              </CardTitle>
-              <CardDescription>
-                Jogadores que mais deram assistências
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RankingTable 
-                data={assistenciaData} 
-                type="assistencia" 
-                temporada={temporadaSelecionada}
-              />
-            </CardContent>
-          </Card>
+          <RankingTable 
+            temporadaId={selectedTemporada} 
+            tipo="assistencias"
+          />
+        </TabsContent>
+
+        <TabsContent value="disciplina">
+          <RankingTable 
+            temporadaId={selectedTemporada} 
+            tipo="disciplina"
+          />
         </TabsContent>
       </Tabs>
     </div>

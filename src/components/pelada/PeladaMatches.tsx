@@ -35,10 +35,6 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
     }
   };
 
-  const getEventosPorTipo = (eventos: any[], tipo: string) => {
-    return eventos.filter(e => e.tipo === tipo);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -69,12 +65,8 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
             const placarA = partida.placarA || 0;
             const placarB = partida.placarB || 0;
             
-            // Garantir que todos os eventos sejam exibidos
+            // Processar eventos para garantir consistência
             const todosEventos = partida.eventos || [];
-            const gols = getEventosPorTipo(todosEventos, 'gol');
-            const cartoesAmarelos = getEventosPorTipo(todosEventos, 'cartao_amarelo');
-            const cartoesAzuis = getEventosPorTipo(todosEventos, 'cartao_azul');
-            const cartoesVermelhos = getEventosPorTipo(todosEventos, 'cartao_vermelho');
             
             return (
               <div key={partida.id} className="border rounded-lg p-6 bg-gradient-to-r from-green-50 to-blue-50">
@@ -126,114 +118,58 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
                       Eventos da Partida ({todosEventos.length})
                     </h4>
                     
-                    {/* Seção de Gols */}
-                    {gols.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="font-medium text-green-700 mb-2 flex items-center">
-                          <Target className="h-4 w-4 mr-2" />
-                          Gols ({gols.length})
-                        </h5>
-                        <div className="grid gap-2">
-                          {gols.map((evento, eventIndex) => (
-                            <div key={`gol-${eventIndex}`} className="flex items-center justify-between p-3 bg-green-50 rounded border">
-                              <div className="flex items-center space-x-3">
-                                <EventIcon tipo={evento.tipo} />
-                                <div>
-                                  <span className="font-medium">
-                                    <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline text-green-700">
-                                      {getJogadorNome(evento.jogadorId)}
+                    <div className="space-y-2">
+                      {todosEventos.map((evento, eventIndex) => {
+                        const eventoKey = `${partida.id}-${evento.id}-${eventIndex}`;
+                        const isGol = evento.tipo === 'gol';
+                        const isCartao = ['cartao_amarelo', 'cartao_azul', 'cartao_vermelho'].includes(evento.tipo);
+                        
+                        let bgColor = 'bg-gray-50';
+                        let textColor = 'text-gray-700';
+                        let badgeColor = 'bg-gray-100 text-gray-800';
+                        
+                        if (isGol) {
+                          bgColor = 'bg-green-50';
+                          textColor = 'text-green-700';
+                          badgeColor = 'bg-green-100 text-green-800';
+                        } else if (isCartao) {
+                          bgColor = 'bg-orange-50';
+                          textColor = 'text-orange-700';
+                          if (evento.tipo === 'cartao_amarelo') {
+                            badgeColor = 'bg-yellow-100 text-yellow-800';
+                          } else if (evento.tipo === 'cartao_azul') {
+                            badgeColor = 'bg-blue-100 text-blue-800';
+                          } else {
+                            badgeColor = 'bg-red-100 text-red-800';
+                          }
+                        }
+                        
+                        return (
+                          <div key={eventoKey} className={`flex items-center justify-between p-3 ${bgColor} rounded border`}>
+                            <div className="flex items-center space-x-3">
+                              <EventIcon tipo={evento.tipo} />
+                              <div>
+                                <span className={`font-medium ${textColor}`}>
+                                  <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline">
+                                    {getJogadorNome(evento.jogadorId)}
+                                  </Link>
+                                </span>
+                                {evento.assistidoPor && (
+                                  <div className="text-sm text-muted-foreground">
+                                    Assistência: <Link to={`/jogador/${evento.assistidoPor}`} className="hover:underline text-green-600">
+                                      {getJogadorNome(evento.assistidoPor)}
                                     </Link>
-                                  </span>
-                                  {evento.assistidoPor && (
-                                    <div className="text-sm text-muted-foreground">
-                                      Assistência: <Link to={`/jogador/${evento.assistidoPor}`} className="hover:underline text-green-600">
-                                        {getJogadorNome(evento.assistidoPor)}
-                                      </Link>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                Gol
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Seção de Cartões */}
-                    {(cartoesAmarelos.length > 0 || cartoesAzuis.length > 0 || cartoesVermelhos.length > 0) && (
-                      <div className="mb-4">
-                        <h5 className="font-medium text-orange-700 mb-2">
-                          Cartões ({cartoesAmarelos.length + cartoesAzuis.length + cartoesVermelhos.length})
-                        </h5>
-                        <div className="grid gap-2">
-                          {[...cartoesAmarelos, ...cartoesAzuis, ...cartoesVermelhos].map((evento, eventIndex) => (
-                            <div key={`cartao-${eventIndex}`} className="flex items-center justify-between p-3 bg-orange-50 rounded border">
-                              <div className="flex items-center space-x-3">
-                                <EventIcon tipo={evento.tipo} />
-                                <div>
-                                  <span className="font-medium">
-                                    <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline text-orange-700">
-                                      {getJogadorNome(evento.jogadorId)}
-                                    </Link>
-                                  </span>
-                                </div>
-                              </div>
-                              <Badge 
-                                variant="secondary" 
-                                className={`${
-                                  evento.tipo === 'cartao_amarelo' ? 'bg-yellow-100 text-yellow-800' :
-                                  evento.tipo === 'cartao_azul' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}
-                              >
-                                {getEventoTexto(evento.tipo)}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Lista completa de eventos (caso queira ver tudo junto) */}
-                    <details className="mt-4">
-                      <summary className="cursor-pointer font-medium text-sm text-muted-foreground hover:text-foreground">
-                        Ver todos os eventos em ordem
-                      </summary>
-                      <ScrollArea className="max-h-64 w-full mt-2">
-                        <div className="space-y-2 pr-4">
-                          {todosEventos.map((evento, eventIndex) => {
-                            const eventoKey = `${partida.id}-${evento.id}-${eventIndex}`;
-                            return (
-                              <div key={eventoKey} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <div className="flex items-center space-x-3">
-                                  <EventIcon tipo={evento.tipo} />
-                                  <div>
-                                    <span className="font-medium text-sm">
-                                      <Link to={`/jogador/${evento.jogadorId}`} className="hover:underline text-blue-600">
-                                        {getJogadorNome(evento.jogadorId)}
-                                      </Link>
-                                    </span>
-                                    {evento.assistidoPor && (
-                                      <div className="text-xs text-muted-foreground">
-                                        Assistência: <Link to={`/jogador/${evento.assistidoPor}`} className="hover:underline text-blue-600">
-                                          {getJogadorNome(evento.assistidoPor)}
-                                        </Link>
-                                      </div>
-                                    )}
                                   </div>
-                                </div>
-                                <Badge variant="secondary" className="text-xs">
-                                  {getEventoTexto(evento.tipo)}
-                                </Badge>
+                                )}
                               </div>
-                            );
-                          })}
-                        </div>
-                      </ScrollArea>
-                    </details>
+                            </div>
+                            <Badge variant="secondary" className={badgeColor}>
+                              {getEventoTexto(evento.tipo)}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
                 

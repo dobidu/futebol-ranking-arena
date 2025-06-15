@@ -25,6 +25,38 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({
   percentualMensalistas,
   temporadaAtiva
 }) => {
+  // Calcular assiduidade correta
+  const calcularAssiduidade = () => {
+    if (!temporadaAtiva || !peladasTemporadaAtiva.length) return 0;
+    
+    let totalPresencas = 0;
+    let totalPossivel = 0;
+    
+    peladasTemporadaAtiva.forEach(pelada => {
+      // Contar jogadores que estavam presentes
+      let presentes = 0;
+      
+      if (pelada.presencas) {
+        presentes = pelada.presencas.filter((p: any) => p.presente).length;
+      } else if (pelada.jogadoresPresentes) {
+        presentes = pelada.jogadoresPresentes.filter((jp: any) => jp.presente).length;
+      } else if (pelada.times) {
+        const jogadoresUnicos = new Set();
+        pelada.times.forEach((time: any) => {
+          time.jogadores.forEach((jogadorId: string) => jogadoresUnicos.add(jogadorId));
+        });
+        presentes = jogadoresUnicos.size;
+      }
+      
+      totalPresencas += presentes;
+      totalPossivel += jogadoresAtivos.length; // Todos os jogadores poderiam estar presentes
+    });
+    
+    return totalPossivel > 0 ? Math.round((totalPresencas / totalPossivel) * 100) : 0;
+  };
+
+  const assiduidade = calcularAssiduidade();
+
   const estatisticasGerais = [
     {
       titulo: 'Temporadas',
@@ -45,7 +77,7 @@ const StatisticsCards: React.FC<StatisticsCardsProps> = ({
     {
       titulo: 'Peladas Realizadas',
       valor: peladasTemporadaAtiva.length,
-      descricao: temporadaAtiva ? `${totalPartidas} partidas` : 'Nenhuma temporada ativa',
+      descricao: temporadaAtiva ? `${assiduidade}% assiduidade média` : 'Nenhuma temporada ativa',
       icon: Calendar,
       cor: 'text-green-600',
       bgCor: 'bg-green-50 border-green-200'
