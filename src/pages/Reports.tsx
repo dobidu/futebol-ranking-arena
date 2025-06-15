@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { temporadaService, peladaService } from '@/services/dataService';
-import { rankingService } from '@/services/rankingService';
+import { temporadaService, peladaService, calcularRanking } from '@/services/dataService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -21,13 +20,16 @@ const Reports: React.FC = () => {
 
   const { data: peladas = [] } = useQuery({
     queryKey: ['peladas', selectedTemporada],
-    queryFn: () => peladaService.getByTemporada(selectedTemporada),
+    queryFn: () => {
+      const allPeladas = peladaService.getAll();
+      return selectedTemporada ? allPeladas.filter(p => p.temporadaId === selectedTemporada) : [];
+    },
     enabled: !!selectedTemporada,
   });
 
   const { data: ranking = [] } = useQuery({
     queryKey: ['ranking', selectedTemporada],
-    queryFn: () => rankingService.getRanking(selectedTemporada),
+    queryFn: () => calcularRanking(selectedTemporada),
     enabled: !!selectedTemporada,
   });
 

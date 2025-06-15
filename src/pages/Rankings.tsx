@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { temporadaService } from '@/services/dataService';
+import { temporadaService, calcularRanking } from '@/services/dataService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SeasonSelector from '@/components/rankings/SeasonSelector';
 import RankingTable from '@/components/rankings/RankingTable';
@@ -28,6 +28,29 @@ const Rankings: React.FC = () => {
 
   const selectedTemporadaObj = temporadas.find(t => t.id === selectedTemporada);
 
+  // Calculate ranking data
+  const rankingData = React.useMemo(() => {
+    if (!selectedTemporada) return [];
+    return calcularRanking(selectedTemporada);
+  }, [selectedTemporada]);
+
+  // Sort data for different ranking types
+  const artilheirosData = React.useMemo(() => {
+    return [...rankingData].sort((a, b) => b.gols - a.gols);
+  }, [rankingData]);
+
+  const assistenciasData = React.useMemo(() => {
+    return [...rankingData].sort((a, b) => b.assistencias - a.assistencias);
+  }, [rankingData]);
+
+  const disciplinaData = React.useMemo(() => {
+    return [...rankingData].sort((a, b) => {
+      const totalCartoesA = a.cartoesAmarelos + a.cartoesAzuis + a.cartoesVermelhos;
+      const totalCartoesB = b.cartoesAmarelos + b.cartoesAzuis + b.cartoesVermelhos;
+      return totalCartoesB - totalCartoesA;
+    });
+  }, [rankingData]);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -53,29 +76,33 @@ const Rankings: React.FC = () => {
 
         <TabsContent value="geral">
           <RankingTable 
-            temporada={selectedTemporadaObj} 
-            tipo="geral"
+            data={rankingData}
+            type="geral"
+            temporada={selectedTemporadaObj}
           />
         </TabsContent>
 
         <TabsContent value="artilheiros">
           <RankingTable 
-            temporada={selectedTemporadaObj} 
-            tipo="artilheiros"
+            data={artilheirosData}
+            type="artilharia"
+            temporada={selectedTemporadaObj}
           />
         </TabsContent>
 
         <TabsContent value="assistencias">
           <RankingTable 
-            temporada={selectedTemporadaObj} 
-            tipo="assistencias"
+            data={assistenciasData}
+            type="assistencia"
+            temporada={selectedTemporadaObj}
           />
         </TabsContent>
 
         <TabsContent value="disciplina">
           <RankingTable 
-            temporada={selectedTemporadaObj} 
-            tipo="disciplina"
+            data={disciplinaData}
+            type="geral"
+            temporada={selectedTemporadaObj}
           />
         </TabsContent>
       </Tabs>
