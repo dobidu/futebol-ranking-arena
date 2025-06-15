@@ -26,6 +26,8 @@ const Rankings: React.FC = () => {
     }
   }, [temporadas, selectedTemporada]);
 
+  const selectedTemporadaObj = temporadas.find(t => t.id === selectedTemporada);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -33,11 +35,13 @@ const Rankings: React.FC = () => {
         <p className="text-muted-foreground">Classificações e estatísticas dos jogadores</p>
       </div>
 
-      <SeasonSelector
-        temporadas={temporadas}
-        selectedTemporada={selectedTemporada}
-        onTemporadaChange={setSelectedTemporada}
-      />
+      <div className="flex justify-center">
+        <SeasonSelector
+          temporadas={temporadas}
+          selectedTemporada={selectedTemporada}
+          onSelectionChange={setSelectedTemporada}
+        />
+      </div>
 
       <Tabs defaultValue="geral" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -49,28 +53,28 @@ const Rankings: React.FC = () => {
 
         <TabsContent value="geral">
           <RankingTable 
-            temporada={selectedTemporada} 
+            temporada={selectedTemporadaObj} 
             tipo="geral"
           />
         </TabsContent>
 
         <TabsContent value="artilheiros">
           <RankingTable 
-            temporada={selectedTemporada} 
+            temporada={selectedTemporadaObj} 
             tipo="artilheiros"
           />
         </TabsContent>
 
         <TabsContent value="assistencias">
           <RankingTable 
-            temporada={selectedTemporada} 
+            temporada={selectedTemporadaObj} 
             tipo="assistencias"
           />
         </TabsContent>
 
         <TabsContent value="disciplina">
           <RankingTable 
-            temporada={selectedTemporada} 
+            temporada={selectedTemporadaObj} 
             tipo="disciplina"
           />
         </TabsContent>

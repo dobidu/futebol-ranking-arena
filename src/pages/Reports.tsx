@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { temporadaService } from '@/services/dataService';
+import { temporadaService, peladaService } from '@/services/dataService';
+import { rankingService } from '@/services/rankingService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,18 @@ const Reports: React.FC = () => {
   const { data: temporadas = [] } = useQuery({
     queryKey: ['temporadas'],
     queryFn: temporadaService.getAll,
+  });
+
+  const { data: peladas = [] } = useQuery({
+    queryKey: ['peladas', selectedTemporada],
+    queryFn: () => peladaService.getByTemporada(selectedTemporada),
+    enabled: !!selectedTemporada,
+  });
+
+  const { data: ranking = [] } = useQuery({
+    queryKey: ['ranking', selectedTemporada],
+    queryFn: () => rankingService.getRanking(selectedTemporada),
+    enabled: !!selectedTemporada,
   });
 
   // Selecionar temporada ativa por padrão
@@ -64,19 +77,19 @@ const Reports: React.FC = () => {
         </TabsList>
 
         <TabsContent value="geral">
-          <ReportsGeneralTab temporada={selectedTemporada} />
+          <ReportsGeneralTab ranking={ranking} peladas={peladas} />
         </TabsContent>
 
         <TabsContent value="evolucao">
-          <ReportsEvolutionTab temporada={selectedTemporada} />
+          <ReportsEvolutionTab ranking={ranking} peladas={peladas} />
         </TabsContent>
 
         <TabsContent value="parcerias">
-          <ReportsPartnershipsTab temporada={selectedTemporada} />
+          <ReportsPartnershipsTab ranking={ranking} peladas={peladas} />
         </TabsContent>
 
         <TabsContent value="disciplina">
-          <ReportsDisciplineTab temporada={selectedTemporada} />
+          <ReportsDisciplineTab ranking={ranking} />
         </TabsContent>
       </Tabs>
     </div>

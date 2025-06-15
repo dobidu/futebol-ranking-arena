@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { jogadorService } from '@/services/dataService';
@@ -43,13 +42,23 @@ const AdminPlayers: React.FC = () => {
 
     try {
       if (editingPlayer) {
-        jogadorService.update(editingPlayer.id, { nome, tipo });
+        jogadorService.update(editingPlayer.id, { 
+          nome, 
+          tipo,
+          ativo: editingPlayer.ativo,
+          criadoEm: editingPlayer.criadoEm
+        });
         toast({
           title: "Sucesso",
           description: "Jogador atualizado com sucesso!"
         });
       } else {
-        jogadorService.create({ nome, tipo });
+        jogadorService.create({ 
+          nome, 
+          tipo,
+          ativo: true,
+          criadoEm: new Date()
+        });
         toast({
           title: "Sucesso",
           description: "Jogador criado com sucesso!"

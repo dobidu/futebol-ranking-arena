@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { temporadaService } from '@/services/dataService';
@@ -39,7 +38,8 @@ const AdminSeasons: React.FC = () => {
       penalidadeCartaoAzul: parseInt(formData.get('penalidadeCartaoAzul') as string),
       penalidadeCartaoVermelho: parseInt(formData.get('penalidadeCartaoVermelho') as string),
       numeroDescartes: parseInt(formData.get('numeroDescartes') as string),
-      ativa: formData.get('ativa') === 'on'
+      ativa: formData.get('ativa') === 'on',
+      criadaEm: editingSeason?.criadaEm || new Date()
     };
 
     try {
