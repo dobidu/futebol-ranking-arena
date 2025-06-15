@@ -1,13 +1,13 @@
-
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { User, Trophy, Target, Users, ArrowLeft, Calendar, TrendingUp, Award, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useParams } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { jogadorService, peladaService, temporadaService, calcularRanking } from '@/services/dataService';
+import PlayerHeader from '@/components/player/PlayerHeader';
+import PlayerStatsCards from '@/components/player/PlayerStatsCards';
+import PlayerSeasonHistory from '@/components/player/PlayerSeasonHistory';
+import PlayerAdvancedStats from '@/components/player/PlayerAdvancedStats';
+import PlayerRecentGames from '@/components/player/PlayerRecentGames';
 
 const PlayerProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -153,284 +153,31 @@ const PlayerProfile: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center space-x-4 bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border">
-        <Link to="/jogadores">
-          <Button variant="outline" size="sm" className="shadow-sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
-            <div className="p-2 bg-primary/10 rounded-full">
-              <User className="h-8 w-8 text-primary" />
-            </div>
-            <span>{jogador.nome}</span>
-            {estatisticasGerais.posicaoAtual > 0 && estatisticasGerais.posicaoAtual <= 3 && (
-              <Badge variant="default" className="ml-2 bg-gradient-to-r from-yellow-400 to-orange-500">
-                <Trophy className="h-3 w-3 mr-1" />
-                {estatisticasGerais.posicaoAtual}º lugar
-              </Badge>
-            )}
-          </h1>
-          <div className="flex items-center space-x-3 mt-2">
-            <Badge variant={jogador.tipo === 'Mensalista' ? 'default' : 'secondary'} className="font-medium">
-              {jogador.tipo}
-            </Badge>
-            <Badge variant={jogador.ativo ? 'default' : 'destructive'}>
-              {jogador.ativo ? 'Ativo' : 'Inativo'}
-            </Badge>
-            <span className="text-muted-foreground flex items-center">
-              <Calendar className="h-4 w-4 mr-1" />
-              Membro desde {new Date(jogador.criadoEm).toLocaleDateString('pt-BR')}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Estatísticas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="gradient-card border-l-4 border-l-blue-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Pontos</p>
-                <p className="text-3xl font-bold text-blue-600">{estatisticasGerais.totalPontos}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Média: {estatisticasGerais.mediaPontosPorPelada.toFixed(1)}/pelada
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Trophy className="h-8 w-8 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="gradient-card border-l-4 border-l-green-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Gols</p>
-                <p className="text-3xl font-bold text-green-600">{estatisticasGerais.totalGols}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Média: {estatisticasGerais.mediaGolsPorPelada.toFixed(1)}/pelada
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Target className="h-8 w-8 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="gradient-card border-l-4 border-l-purple-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Assistências</p>
-                <p className="text-3xl font-bold text-purple-600">{estatisticasGerais.totalAssistencias}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Em {estatisticasGerais.totalPresencas} peladas
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Users className="h-8 w-8 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="gradient-card border-l-4 border-l-orange-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Taxa de Vitória</p>
-                <p className="text-3xl font-bold text-orange-600">{estatisticasGerais.percentualVitorias.toFixed(0)}%</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {estatisticasGerais.totalVitorias} vitórias
-                </p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-full">
-                <Award className="h-8 w-8 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PlayerHeader jogador={jogador} posicaoAtual={estatisticasGerais.posicaoAtual} />
+      
+      <PlayerStatsCards 
+        totalPontos={estatisticasGerais.totalPontos}
+        totalGols={estatisticasGerais.totalGols}
+        totalAssistencias={estatisticasGerais.totalAssistencias}
+        totalPresencas={estatisticasGerais.totalPresencas}
+        percentualVitorias={estatisticasGerais.percentualVitorias}
+        totalVitorias={estatisticasGerais.totalVitorias}
+        mediaPontosPorPelada={estatisticasGerais.mediaPontosPorPelada}
+        mediaGolsPorPelada={estatisticasGerais.mediaGolsPorPelada}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Histórico por Temporada */}
-        <Card className="gradient-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Star className="h-5 w-5 text-primary" />
-              <span>Histórico por Temporada</span>
-            </CardTitle>
-            <CardDescription>Performance detalhada em cada temporada</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {historicoTemporadas.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Temporada</TableHead>
-                    <TableHead className="text-center">Pos.</TableHead>
-                    <TableHead className="text-center">Pts</TableHead>
-                    <TableHead className="text-center">Gols</TableHead>
-                    <TableHead className="text-center">Vit.</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {historicoTemporadas.map((temporada, index) => (
-                    <TableRow key={index} className="hover:bg-muted/50">
-                      <TableCell>
-                        <Link 
-                          to={`/temporada/${temporada.temporadaId}`} 
-                          className="hover:underline font-medium text-primary"
-                        >
-                          {temporada.temporada}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge 
-                          variant={temporada.posicao <= 3 ? 'default' : 'secondary'}
-                          className={temporada.posicao <= 3 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : ''}
-                        >
-                          {temporada.posicao}º
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center font-bold">
-                        {temporada.pontos}
-                      </TableCell>
-                      <TableCell className="text-center text-green-600 font-medium">
-                        {temporada.gols}
-                      </TableCell>
-                      <TableCell className="text-center text-blue-600 font-medium">
-                        {temporada.vitorias}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-8">
-                <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">Nenhuma participação registrada</p>
-                <p className="text-sm text-muted-foreground">As temporadas aparecerão aqui quando o jogador participar</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Estatísticas Avançadas */}
-        <Card className="gradient-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              <span>Estatísticas Avançadas</span>
-            </CardTitle>
-            <CardDescription>Indicadores detalhados de performance</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <div className="text-sm text-muted-foreground">Presença Total</div>
-                <div className="text-xl font-bold text-blue-600">{estatisticasGerais.totalPresencas}</div>
-                <div className="text-xs text-muted-foreground">de {peladas.length} peladas</div>
-              </div>
-              <div className="bg-green-50 p-3 rounded-lg">
-                <div className="text-sm text-muted-foreground">Taxa de Presença</div>
-                <div className="text-xl font-bold text-green-600">{estatisticasGerais.mediaPresenca}%</div>
-                <div className="text-xs text-muted-foreground">frequência</div>
-              </div>
-              <div className="bg-purple-50 p-3 rounded-lg">
-                <div className="text-sm text-muted-foreground">Temporadas</div>
-                <div className="text-xl font-bold text-purple-600">{estatisticasGerais.temporadasParticipadas}</div>
-                <div className="text-xs text-muted-foreground">participadas</div>
-              </div>
-              <div className="bg-orange-50 p-3 rounded-lg">
-                <div className="text-sm text-muted-foreground">Posição Atual</div>
-                <div className="text-xl font-bold text-orange-600">
-                  {estatisticasGerais.posicaoAtual > 0 ? `${estatisticasGerais.posicaoAtual}º` : 'N/A'}
-                </div>
-                <div className="text-xs text-muted-foreground">no ranking</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <PlayerSeasonHistory historicoTemporadas={historicoTemporadas} />
+        <PlayerAdvancedStats 
+          totalPresencas={estatisticasGerais.totalPresencas}
+          totalPeladas={peladas.length}
+          mediaPresenca={estatisticasGerais.mediaPresenca}
+          temporadasParticipadas={estatisticasGerais.temporadasParticipadas}
+          posicaoAtual={estatisticasGerais.posicaoAtual}
+        />
       </div>
 
-      {/* Últimas Peladas */}
-      <Card className="gradient-card">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            <span>Últimas Peladas</span>
-          </CardTitle>
-          <CardDescription>Performance nas peladas mais recentes</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {ultimasPeladas.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Temporada</TableHead>
-                  <TableHead className="text-center">Pontos</TableHead>
-                  <TableHead className="text-center">Gols</TableHead>
-                  <TableHead className="text-center">Assists</TableHead>
-                  <TableHead className="text-center">Resultado</TableHead>
-                  <TableHead className="text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ultimasPeladas.map((pelada) => (
-                  <TableRow key={pelada.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">
-                      {pelada.data.toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {pelada.temporada}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="font-bold">
-                        {pelada.pontos}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="text-green-600 font-medium">{pelada.gols}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="text-blue-600 font-medium">{pelada.assistencias}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={pelada.vitorias ? 'default' : 'secondary'}>
-                        {pelada.vitorias ? 'Vitória' : 'Outros'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Link to={`/pelada/${pelada.id}`}>
-                        <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Ver
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">Nenhuma pelada registrada</p>
-              <p className="text-sm text-muted-foreground">As peladas aparecerão aqui quando o jogador participar</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <PlayerRecentGames ultimasPeladas={ultimasPeladas} />
     </div>
   );
 };
