@@ -66,25 +66,16 @@ export const usePeladaSave = ({
           atraso: j.atraso || 'nenhum' as const
         }));
 
-      // Mapear eventos globais para cada partida corretamente
+      // CORRIGIR: Cada partida deve ter seus próprios eventos, não eventos compartilhados
       const partidasFormatadas = partidas.map((p, index) => {
-        // Filtrar apenas eventos que pertencem aos jogadores desta partida específica
-        const jogadoresDaPartida = [...(p.timeA?.jogadores || []), ...(p.timeB?.jogadores || [])];
-        
-        const eventosPartida = eventos
-          .filter(e => jogadoresDaPartida.includes(e.jogadorId))
-          .map((e, eventIndex) => {
-            // Criar um ID único baseado na partida e no índice do evento
-            const eventoUnico = {
-              ...e,
-              id: `${p.id}-evento-${eventIndex}`,
-              partidaId: p.id,
-              minuto: 0
-            };
-            
-            console.log('usePeladaSave - Criando evento único para partida', p.id, ':', eventoUnico);
-            return eventoUnico;
-          });
+        // Cada partida já tem seus eventos únicos através do partidaAtual
+        // Não devemos usar eventos globais aqui
+        const eventosPartida = p.eventos?.map((e, eventIndex) => ({
+          ...e,
+          id: `${p.id}-evento-${eventIndex}`,
+          partidaId: p.id,
+          minuto: 0
+        })) || [];
 
         console.log('usePeladaSave - Eventos da partida', index + 1, ' (ID:', p.id, '):', eventosPartida);
 

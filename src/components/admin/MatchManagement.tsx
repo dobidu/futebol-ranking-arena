@@ -125,6 +125,9 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
       .filter((jogador): jogador is { id: string; nome: string } => jogador !== null);
   };
 
+  // CORRIGIR: Mostrar apenas eventos da partida atual, não eventos globais
+  const eventosPartidaAtual = partidaAtual?.eventos || [];
+
   const canProceed = partidas.length > 0;
 
   if (times.length < 2) {
@@ -315,11 +318,11 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
             </div>
 
             {/* Lista de Eventos */}
-            {eventos.length > 0 && (
+            {eventosPartidaAtual.length > 0 && (
               <div className="bg-white p-4 rounded-lg border shadow-sm">
                 <h3 className="text-lg font-semibold mb-4 flex items-center text-orange-700">
                   <Trophy className="h-5 w-5 mr-2" />
-                  Eventos da Partida
+                  Eventos da Partida ({eventosPartidaAtual.length})
                 </h3>
                 <Table>
                   <TableHeader>
@@ -331,7 +334,7 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {eventos.map((evento) => (
+                    {eventosPartidaAtual.map((evento) => (
                       <TableRow key={evento.id}>
                         <TableCell>
                           <Badge variant={evento.tipo === 'gol' ? 'default' : 'secondary'} className="text-sm">
