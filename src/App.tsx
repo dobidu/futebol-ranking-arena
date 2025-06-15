@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -20,6 +19,7 @@ import AdminPlayers from '@/pages/admin/AdminPlayers';
 import AdminSeasons from '@/pages/admin/AdminSeasons';
 import AdminPeladas from '@/pages/admin/AdminPeladas';
 import NotFound from '@/pages/NotFound';
+import EditPeladaPage from '@/pages/admin/EditPeladaPage';
 
 import './App.css';
 
@@ -71,6 +71,7 @@ function App() {
             <Route path="/admin/pelada/:id" element={<PeladaDetail />} />
             <Route path="/admin/peladas" element={<AdminPeladas />} />
             <Route path="/admin/peladas/editar/:id" element={<AdminPeladas />} />
+            <Route path="/admin/pelada/:id/editar" element={<EditPeladaPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

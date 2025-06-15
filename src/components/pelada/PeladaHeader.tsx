@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar, Edit, ArrowLeft } from 'lucide-react';
+import { Calendar, Edit, ArrowLeft, Settings } from 'lucide-react';
 import { Pelada, Temporada } from '@/types';
 
 interface PeladaHeaderProps {
@@ -32,12 +32,20 @@ const PeladaHeader: React.FC<PeladaHeaderProps> = ({
         </Link>
         
         {isAdminRoute && (
-          <Link to={`/admin/peladas/editar/${pelada.id}`} className="w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Link to={`/admin/pelada/${pelada.id}/editar`} className="w-full sm:w-auto">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Settings className="h-4 w-4 mr-2" />
+                Editar Dados
+              </Button>
+            </Link>
+            <Link to={`/admin/peladas/editar/${pelada.id}`} className="w-full sm:w-auto">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Edit className="h-4 w-4 mr-2" />
+                Recriar Pelada
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
