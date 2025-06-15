@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users } from 'lucide-react';
+import { Users, Target } from 'lucide-react';
 import { RankingJogador, Pelada } from '@/types';
 
 interface ReportsPartnershipsTabProps {
@@ -12,123 +12,165 @@ interface ReportsPartnershipsTabProps {
 }
 
 const ReportsPartnershipsTab: React.FC<ReportsPartnershipsTabProps> = ({ ranking, peladas }) => {
-  // Calcular parcerias baseado em gols e assistências reais das peladas
-  const calcularParcerias = () => {
+  // Calcular parcerias baseado em assistências específicas entre jogadores
+  const calcularParceriasAssistencias = () => {
     const parcerias: { [key: string]: { 
-      jogos: number; 
-      golsCombo: number; 
-      assistenciasCombo: number;
-      jogador1: string;
-      jogador2: string;
+      assistencias: number; 
+      jogosJuntos: number;
+      assistente: string;
+      goleador: string;
     } } = {};
     
     peladas.forEach(pelada => {
+      // Primeiro, identificar quais jogadores jogaram juntos em cada pelada
+      const jogadoresPorTime: { [timeId: string]: string[] } = {};
+      
       if (pelada.times) {
         pelada.times.forEach(time => {
-          if (time.jogadores.length >= 2) {
-            // Para cada combinação de jogadores no mesmo time
-            for (let i = 0; i < time.jogadores.length; i++) {
-              for (let j = i + 1; j < time.jogadores.length; j++) {
-                const jogador1Info = ranking.find(r => r.jogador.id === time.jogadores[i]);
-                const jogador2Info = ranking.find(r => r.jogador.id === time.jogadores[j]);
+          jogadoresPorTime[time.id] = time.jogadores;
+        });
+      }
+      
+      // Processar eventos de gol com assistências
+      if (pelada.partidas) {
+        pelada.partidas.forEach(partida => {
+          if (partida.eventos) {
+            partida.eventos.forEach(evento => {
+              if (evento.tipo === 'gol' && evento.assistidoPor) {
+                const goleadorInfo = ranking.find(r => r.jogador.id === evento.jogadorId);
+                const assistenteInfo = ranking.find(r => r.jogador.id === evento.assistidoPor);
                 
-                if (jogador1Info && jogador2Info) {
-                  const chave = [jogador1Info.jogador.nome, jogador2Info.jogador.nome].sort().join(' & ');
+                if (goleadorInfo && assistenteInfo) {
+                  // Verificar se jogaram no mesmo time
+                  let jogavamJuntos = false;
+                  Object.values(jogadoresPorTime).forEach(jogadoresTime => {
+                    if (jogadoresTime.includes(evento.jogadorId) && jogadoresTime.includes(evento.assistidoPor)) {
+                      jogavamJuntos = true;
+                    }
+                  });
                   
-                  if (!parcerias[chave]) {
-                    parcerias[chave] = { 
-                      jogos: 0, 
-                      golsCombo: 0, 
-                      assistenciasCombo: 0,
-                      jogador1: jogador1Info.jogador.nome,
-                      jogador2: jogador2Info.jogador.nome
-                    };
-                  }
-                  
-                  parcerias[chave].jogos++;
-                  
-                  // Contar gols e assistências da partida específica
-                  if (pelada.partidas) {
-                    pelada.partidas.forEach(partida => {
-                      if (partida.eventos) {
-                        partida.eventos.forEach(evento => {
-                          if (evento.jogadorId === time.jogadores[i] || evento.jogadorId === time.jogadores[j]) {
-                            if (evento.tipo === 'gol') {
-                              parcerias[chave].golsCombo++;
-                            }
-                            if (evento.assistidoPor === time.jogadores[i] || evento.assistidoPor === time.jogadores[j]) {
-                              parcerias[chave].assistenciasCombo++;
-                            }
-                          }
-                        });
-                      }
-                    });
+                  if (jogavamJuntos) {
+                    const chave = `${assistenteInfo.jogador.nome} → ${goleadorInfo.jogador.nome}`;
+                    
+                    if (!parcerias[chave]) {
+                      parcerias[chave] = { 
+                        assistencias: 0, 
+                        jogosJuntos: 0,
+                        assistente: assistenteInfo.jogador.nome,
+                        goleador: goleadorInfo.jogador.nome
+                      };
+                    }
+                    
+                    parcerias[chave].assistencias++;
                   }
                 }
               }
-            }
+            });
           }
         });
       }
     });
 
+    // Calcular jogos juntos para cada parceria
+    Object.keys(parcerias).forEach(chave => {
+      const parceria = parcerias[chave];
+      let jogosJuntos = 0;
+      
+      peladas.forEach(pelada => {
+        if (pelada.times) {
+          const jogouJunto = pelada.times.some(time => {
+            const assistentePresente = time.jogadores.some(jogadorId => {
+              const jogador = ranking.find(r => r.jogador.id === jogadorId);
+              return jogador?.jogador.nome === parceria.assistente;
+            });
+            const goleadorPresente = time.jogadores.some(jogadorId => {
+              const jogador = ranking.find(r => r.jogador.id === jogadorId);
+              return jogador?.jogador.nome === parceria.goleador;
+            });
+            return assistentePresente && goleadorPresente;
+          });
+          
+          if (jogouJunto) {
+            jogosJuntos++;
+          }
+        }
+      });
+      
+      parcerias[chave].jogosJuntos = jogosJuntos;
+    });
+
     return Object.entries(parcerias)
-      .map(([nomes, stats]) => ({ nomes, ...stats }))
-      .sort((a, b) => (b.golsCombo + b.assistenciasCombo) - (a.golsCombo + a.assistenciasCombo))
-      .slice(0, 8);
+      .map(([chave, stats]) => ({ 
+        parceria: chave, 
+        ...stats 
+      }))
+      .sort((a, b) => b.assistencias - a.assistencias)
+      .slice(0, 10);
   };
 
-  const topParcerias = calcularParcerias();
+  const topParceriasAssistencias = calcularParceriasAssistencias();
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Users className="h-5 w-5" />
-            <span>Análise de Parcerias</span>
+            <Target className="h-5 w-5" />
+            <span>Melhores Parcerias - Assistências para Gols</span>
           </CardTitle>
-          <CardDescription>Duplas com melhor performance em gols e assistências</CardDescription>
+          <CardDescription>
+            Duplas que mais se conectam: assistências específicas entre jogadores
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Parceria</TableHead>
-                <TableHead className="text-center">Jogos Juntos</TableHead>
-                <TableHead className="text-center">Gols Combinados</TableHead>
                 <TableHead className="text-center">Assistências</TableHead>
-                <TableHead className="text-center">Total Contribuições</TableHead>
-                <TableHead className="text-center">Efetividade</TableHead>
+                <TableHead className="text-center">Jogos Juntos</TableHead>
+                <TableHead className="text-center">Eficiência</TableHead>
+                <TableHead className="text-center">Química</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {topParcerias.map((parceria, index) => {
-                const totalContribuicoes = parceria.golsCombo + parceria.assistenciasCombo;
-                const efetividade = parceria.jogos > 0 ? (totalContribuicoes / parceria.jogos).toFixed(1) : '0.0';
+              {topParceriasAssistencias.map((parceria, index) => {
+                const eficiencia = parceria.jogosJuntos > 0 ? (parceria.assistencias / parceria.jogosJuntos).toFixed(2) : '0.00';
+                const quimica = parseFloat(eficiencia) >= 0.5 ? 'Alta' : parseFloat(eficiencia) >= 0.25 ? 'Média' : 'Baixa';
                 
                 return (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{parceria.nomes}</TableCell>
-                    <TableCell className="text-center">{parceria.jogos}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>{parceria.parceria}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-green-100 text-green-800">
-                        {parceria.golsCombo}
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        {parceria.assistencias}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                        {parceria.assistenciasCombo}
+                      <Badge variant="outline">
+                        {parceria.jogosJuntos}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary">
-                        {totalContribuicoes}
+                        {eficiencia}/jogo
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={parseFloat(efetividade) >= 1.0 ? "default" : "secondary"}>
-                        {efetividade}/jogo
+                      <Badge 
+                        variant={quimica === 'Alta' ? 'default' : quimica === 'Média' ? 'secondary' : 'outline'}
+                        className={
+                          quimica === 'Alta' ? 'bg-green-100 text-green-800' :
+                          quimica === 'Média' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }
+                      >
+                        {quimica}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -137,9 +179,13 @@ const ReportsPartnershipsTab: React.FC<ReportsPartnershipsTabProps> = ({ ranking
             </TableBody>
           </Table>
           
-          {topParcerias.length === 0 && (
+          {topParceriasAssistencias.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Dados insuficientes para análise de parcerias</p>
+              <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhuma assistência registrada entre jogadores</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Assistências específicas aparecerão aqui quando houver dados registrados
+              </p>
             </div>
           )}
         </CardContent>
