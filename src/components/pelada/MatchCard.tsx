@@ -36,21 +36,15 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const placarA = partida.placarA ?? partida.golsTimeA ?? 0;
   const placarB = partida.placarB ?? partida.golsTimeB ?? 0;
   
-  // Filtrar eventos APENAS desta partida específica usando o partidaId correto
+  // Filtrar eventos APENAS desta partida específica usando partidaId
   const eventosDestaPartida = (partida.eventos || []).filter(evento => {
-    // Garantir correspondência exata entre evento.partidaId e partida.id
-    const eventoPerteceAEstaPartida = evento.partidaId === partida.id;
-    
-    console.log(`MatchCard - Verificando evento ${evento.id}:`);
-    console.log(`  - evento.partidaId: ${evento.partidaId}`);
-    console.log(`  - partida.id: ${partida.id}`);
-    console.log(`  - pertence: ${eventoPerteceAEstaPartida}`);
-    
-    return eventoPerteceAEstaPartida;
+    const eventoCorreto = evento.partidaId === partida.id;
+    console.log(`MatchCard ${partida.id} - Evento ${evento.id}: partidaId=${evento.partidaId}, partida.id=${partida.id}, correto=${eventoCorreto}`);
+    return eventoCorreto;
   });
 
-  console.log(`MatchCard - Partida ${partida.id} (${index + 1}): ${eventosDestaPartida.length} eventos corretos`);
-  console.log(`MatchCard - Eventos corretos da partida:`, eventosDestaPartida);
+  console.log(`MatchCard - Partida ${partida.id} (${index + 1}): ${eventosDestaPartida.length} eventos próprios`);
+  console.log(`MatchCard - Eventos corretos da partida ${partida.id}:`, eventosDestaPartida);
 
   return (
     <div className="border rounded-lg p-6 bg-gradient-to-r from-green-50 to-blue-50">

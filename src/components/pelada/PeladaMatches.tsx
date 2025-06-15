@@ -17,12 +17,18 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
     return jogador?.nome || 'Jogador não encontrado';
   };
 
-  console.log('PeladaMatches - Partidas completas recebidas:', partidas);
+  console.log('PeladaMatches - Partidas recebidas:', partidas);
+  
+  // Log detalhado de cada partida e seus eventos
   partidas?.forEach((partida, index) => {
     console.log(`PeladaMatches - Partida ${index + 1} (ID: ${partida.id}):`);
     console.log(`  - Total de eventos: ${partida.eventos?.length || 0}`);
-    console.log(`  - Eventos:`, partida.eventos);
     console.log(`  - Placar: ${partida.placarA || 0} x ${partida.placarB || 0}`);
+    
+    // Log de cada evento para debug
+    partida.eventos?.forEach((evento, eventoIndex) => {
+      console.log(`  - Evento ${eventoIndex + 1}: ${evento.tipo} por jogador ${evento.jogadorId} (partidaId: ${evento.partidaId})`);
+    });
   });
 
   return (
@@ -37,9 +43,7 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
       <CardContent>
         <div className="space-y-6">
           {partidas?.map((partida, index) => {
-            console.log(`PeladaMatches - Renderizando partida ${index + 1}:`);
-            console.log(`  - ID da partida: ${partida.id}`);
-            console.log(`  - Eventos da partida: ${partida.eventos?.length || 0}`);
+            console.log(`PeladaMatches - Renderizando partida ${index + 1} (ID: ${partida.id})`);
             
             return (
               <MatchCard
