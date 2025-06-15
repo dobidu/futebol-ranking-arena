@@ -17,6 +17,18 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
     return jogador?.nome || 'Jogador não encontrado';
   };
 
+  // Filtrar eventos únicos para cada partida
+  const partidasComEventosCorretos = partidas?.map(partida => {
+    const eventosEspecificosDaPartida = partida.eventos?.filter(evento => 
+      evento.partidaId === partida.id
+    ) || [];
+
+    return {
+      ...partida,
+      eventos: eventosEspecificosDaPartida
+    };
+  }) || [];
+
   return (
     <Card>
       <CardHeader>
@@ -28,7 +40,7 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {partidas?.map((partida, index) => (
+          {partidasComEventosCorretos.map((partida, index) => (
             <MatchCard
               key={partida.id}
               partida={partida}

@@ -152,10 +152,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               <div>
-                <Label className="text-blue-700 font-medium">Time A</Label>
+                <Label className="text-blue-700 font-medium">Primeiro Time</Label>
                 <Select value={timeASelecionado} onValueChange={setTimeASelecionado}>
                   <SelectTrigger className="border-blue-200 focus:border-blue-400">
-                    <SelectValue placeholder="Selecione o time A" />
+                    <SelectValue placeholder="Selecione o primeiro time" />
                   </SelectTrigger>
                   <SelectContent>
                     {times.map((time) => (
@@ -168,10 +168,10 @@ const MatchManagement: React.FC<MatchManagementProps> = ({
               </div>
 
               <div>
-                <Label className="text-blue-700 font-medium">Time B</Label>
+                <Label className="text-blue-700 font-medium">Segundo Time</Label>
                 <Select value={timeBSelecionado} onValueChange={setTimeBSelecionado}>
                   <SelectTrigger className="border-blue-200 focus:border-blue-400">
-                    <SelectValue placeholder="Selecione o time B" />
+                    <SelectValue placeholder="Selecione o segundo time" />
                   </SelectTrigger>
                   <SelectContent>
                     {times.filter(t => t.id !== timeASelecionado).map((time) => (

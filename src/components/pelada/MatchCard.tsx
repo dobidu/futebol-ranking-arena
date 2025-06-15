@@ -32,10 +32,16 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const timeALetra = timeA?.identificadorLetra || 'A';
   const timeBLetra = timeB?.identificadorLetra || 'B';
   
-  const placarA = partida.placarA || 0;
-  const placarB = partida.placarB || 0;
+  // Usar os valores corretos do placar
+  const placarA = partida.placarA ?? partida.golsTimeA ?? 0;
+  const placarB = partida.placarB ?? partida.golsTimeB ?? 0;
   
-  const todosEventos = partida.eventos || [];
+  // Filtrar eventos específicos desta partida
+  const eventosEspecificosDaPartida = partida.eventos?.filter(evento => 
+    evento.partidaId === partida.id
+  ) || [];
+
+  console.log('MatchCard - Partida:', partida.id, 'Placar:', placarA, 'x', placarB, 'Eventos:', eventosEspecificosDaPartida.length);
 
   return (
     <div className="border rounded-lg p-6 bg-gradient-to-r from-green-50 to-blue-50">
@@ -81,7 +87,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
       </div>
       
       <MatchEvents 
-        eventos={todosEventos}
+        eventos={eventosEspecificosDaPartida}
         partida={partida}
         getJogadorNome={getJogadorNome}
       />
