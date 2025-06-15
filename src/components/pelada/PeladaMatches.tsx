@@ -17,6 +17,12 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
     return jogador?.nome || 'Jogador não encontrado';
   };
 
+  console.log('PeladaMatches - Partidas recebidas:', partidas);
+  partidas?.forEach(partida => {
+    console.log(`PeladaMatches - Partida ${partida.id} tem ${partida.eventos?.length || 0} eventos`);
+    console.log(`PeladaMatches - Eventos da partida ${partida.id}:`, partida.eventos);
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -28,16 +34,19 @@ const PeladaMatches: React.FC<PeladaMatchesProps> = ({ partidas, times, jogadore
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {partidas?.map((partida, index) => (
-            <MatchCard
-              key={partida.id}
-              partida={partida}
-              index={index}
-              times={times}
-              jogadores={jogadores}
-              getJogadorNome={getJogadorNome}
-            />
-          ))}
+          {partidas?.map((partida, index) => {
+            console.log(`PeladaMatches - Renderizando partida ${partida.id} (índice ${index}) com ${partida.eventos?.length || 0} eventos`);
+            return (
+              <MatchCard
+                key={partida.id}
+                partida={partida}
+                index={index}
+                times={times}
+                jogadores={jogadores}
+                getJogadorNome={getJogadorNome}
+              />
+            );
+          })}
           {(!partidas || partidas.length === 0) && (
             <div className="text-center py-8">
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

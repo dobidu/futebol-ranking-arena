@@ -32,10 +32,15 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
     }
   };
 
-  // Garantir que só exibimos eventos desta partida específica
-  const eventosDestaPartida = eventos.filter(evento => evento.partidaId === partida.id);
+  // DUPLO FILTRO para garantir que só exibimos eventos desta partida específica
+  const eventosDestaPartida = eventos.filter(evento => {
+    const pertenceAEstaPartida = evento.partidaId === partida.id;
+    console.log(`MatchEvents - Evento ${evento.id}: partidaId=${evento.partidaId}, partida.id=${partida.id}, pertence=${pertenceAEstaPartida}`);
+    return pertenceAEstaPartida;
+  });
 
-  console.log(`MatchEvents - Partida ${partida.id}: exibindo ${eventosDestaPartida.length} eventos`);
+  console.log(`MatchEvents - Partida ${partida.id}: recebeu ${eventos.length} eventos, filtrou para ${eventosDestaPartida.length} eventos específicos`);
+  console.log(`MatchEvents - Eventos filtrados para partida ${partida.id}:`, eventosDestaPartida);
 
   if (eventosDestaPartida.length === 0) {
     return (
@@ -54,7 +59,8 @@ const MatchEvents: React.FC<MatchEventsProps> = ({
       
       <div className="space-y-2">
         {eventosDestaPartida.map((evento, eventIndex) => {
-          const eventoKey = `${evento.partidaId}-${evento.id}-${eventIndex}`;
+          // Chave única que inclui o partidaId para evitar duplicações
+          const eventoKey = `partida-${partida.id}-evento-${evento.id}-${eventIndex}`;
           const isGol = evento.tipo === 'gol';
           const isCartao = ['cartao_amarelo', 'cartao_azul', 'cartao_vermelho'].includes(evento.tipo);
           
