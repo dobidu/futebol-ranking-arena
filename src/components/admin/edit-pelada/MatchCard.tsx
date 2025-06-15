@@ -28,6 +28,13 @@ const MatchCard: React.FC<MatchCardProps> = ({
     return jogadores.find(j => j.id === jogadorId)?.nome || 'Jogador não encontrado';
   };
 
+  // Filtrar apenas eventos desta partida específica
+  const eventosDestaPartida = (partida.eventos || []).filter(evento => evento.partidaId === partida.id);
+  
+  console.log('MatchCard (Edit) - Partida:', partida.id);
+  console.log('MatchCard (Edit) - Todos os eventos:', partida.eventos);
+  console.log('MatchCard (Edit) - Eventos filtrados desta partida:', eventosDestaPartida);
+
   return (
     <Card>
       <CardHeader>
@@ -55,7 +62,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
         />
 
         <EventsList
-          eventos={partida.eventos || []}
+          eventos={eventosDestaPartida}
           getJogadorNome={getJogadorNome}
           onRemoveEvent={(eventoId) => onRemoveEvent(partidaIndex, eventoId)}
         />

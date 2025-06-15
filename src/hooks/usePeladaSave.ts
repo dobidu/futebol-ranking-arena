@@ -1,3 +1,4 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { peladaService } from '@/services/dataService';
@@ -52,9 +53,8 @@ export const usePeladaSave = ({
       }
 
       console.log('usePeladaSave - Salvando pelada:', pelada);
-      console.log('usePeladaSave - Data original da pelada:', pelada.data);
-      console.log('usePeladaSave - Partidas:', partidas);
-      console.log('usePeladaSave - Eventos:', eventos);
+      console.log('usePeladaSave - Partidas recebidas:', partidas);
+      console.log('usePeladaSave - Eventos globais recebidos:', eventos);
 
       const presencasAtualizadas = jogadoresPresentes
         .filter(j => j.presente)
@@ -66,27 +66,27 @@ export const usePeladaSave = ({
           atraso: j.atraso || 'nenhum' as const
         }));
 
+      // Mapear eventos globais para cada partida corretamente
       const partidasFormatadas = partidas.map((p, index) => {
+        // Filtrar apenas eventos que pertencem aos jogadores desta partida específica
+        const jogadoresDaPartida = [...(p.timeA?.jogadores || []), ...(p.timeB?.jogadores || [])];
+        
         const eventosPartida = eventos
-          .filter(e => {
-            // Associar eventos por índice da partida ou por timeA/timeB
-            const isEventoPartida = p.timeA?.jogadores?.includes(e.jogadorId) || 
-                                   p.timeB?.jogadores?.includes(e.jogadorId);
-            console.log('usePeladaSave - Verificando evento para partida:', { 
-              partidaIndex: index, 
-              eventoId: e.id, 
-              jogadorId: e.jogadorId, 
-              isEventoPartida 
-            });
-            return isEventoPartida;
-          })
-          .map(e => ({
-            ...e,
-            partidaId: p.id,
-            minuto: 0
-          }));
+          .filter(e => jogadoresDaPartida.includes(e.jogadorId))
+          .map((e, eventIndex) => {
+            // Criar um ID único baseado na partida e no índice do evento
+            const eventoUnico = {
+              ...e,
+              id: `${p.id}-evento-${eventIndex}`,
+              partidaId: p.id,
+              minuto: 0
+            };
+            
+            console.log('usePeladaSave - Criando evento único para partida', p.id, ':', eventoUnico);
+            return eventoUnico;
+          });
 
-        console.log('usePeladaSave - Eventos da partida', index + 1, ':', eventosPartida);
+        console.log('usePeladaSave - Eventos da partida', index + 1, ' (ID:', p.id, '):', eventosPartida);
 
         return {
           id: p.id,
@@ -124,10 +124,12 @@ export const usePeladaSave = ({
       };
 
       console.log('usePeladaSave - Pelada atualizada final:', peladaAtualizada);
+      console.log('usePeladaSave - Partidas formatadas finais:', partidasFormatadas);
 
       peladaService.update(peladaAtual, peladaAtualizada);
 
       queryClient.invalidateQueries({ queryKey: ['peladas'] });
+      queryClient.invalidateQueries({ queryKey: ['pelada', peladaAtual] });
       queryClient.invalidateQueries({ queryKey: ['ranking'] });
       queryClient.invalidateQueries({ queryKey: ['ranking-admin'] });
       queryClient.invalidateQueries({ queryKey: ['ranking-reports'] });

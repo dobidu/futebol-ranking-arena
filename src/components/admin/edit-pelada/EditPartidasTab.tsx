@@ -20,24 +20,35 @@ const EditPartidasTab: React.FC<EditPartidasTabProps> = ({
   const [partidas, setPartidas] = useState<PartidaPelada[]>([]);
 
   useEffect(() => {
+    console.log('EditPartidasTab - Carregando partidas:', pelada.partidas);
     setPartidas(pelada.partidas || []);
   }, [pelada]);
 
   const adicionarEvento = (partidaIndex: number, tipo: string, jogadorId: string, assistidoPor?: string) => {
     if (!tipo || !jogadorId) return;
 
+    const partidaAtual = partidas[partidaIndex];
+    if (!partidaAtual) return;
+
     const novoEvento: EventoPelada = {
       id: crypto.randomUUID(),
-      partidaId: partidas[partidaIndex].id,
+      partidaId: partidaAtual.id, // Usar o ID correto da partida
       jogadorId,
       tipo: tipo as any,
       minuto: 0,
       assistidoPor: assistidoPor && assistidoPor !== 'nenhuma' ? assistidoPor : undefined
     };
 
+    console.log('EditPartidasTab - Adicionando evento:', novoEvento);
+    console.log('EditPartidasTab - Para partida:', partidaAtual.id);
+
     setPartidas(prev => prev.map((partida, index) => {
       if (index === partidaIndex) {
-        const eventosAtualizados = [...(partida.eventos || []), novoEvento];
+        // Filtrar eventos existentes desta partida e adicionar o novo
+        const eventosExistentes = partida.eventos?.filter(e => e.partidaId === partida.id) || [];
+        const eventosAtualizados = [...eventosExistentes, novoEvento];
+        
+        console.log('EditPartidasTab - Eventos atualizados para partida', partida.id, ':', eventosAtualizados);
         
         // Se for gol, atualizar placar
         let novosPlacarA = partida.placarA;
@@ -69,7 +80,11 @@ const EditPartidasTab: React.FC<EditPartidasTabProps> = ({
     setPartidas(prev => prev.map((partida, index) => {
       if (index === partidaIndex) {
         const eventoRemovido = partida.eventos?.find(e => e.id === eventoId);
-        const eventosAtualizados = partida.eventos?.filter(e => e.id !== eventoId) || [];
+        // Filtrar apenas eventos desta partida específica
+        const eventosAtualizados = partida.eventos?.filter(e => e.id !== eventoId && e.partidaId === partida.id) || [];
+        
+        console.log('EditPartidasTab - Removendo evento', eventoId, 'da partida', partida.id);
+        console.log('EditPartidasTab - Eventos restantes:', eventosAtualizados);
         
         // Se for gol, atualizar placar
         let novosPlacarA = partida.placarA;
@@ -113,9 +128,19 @@ const EditPartidasTab: React.FC<EditPartidasTabProps> = ({
   };
 
   const handleSave = () => {
+    console.log('EditPartidasTab - Salvando partidas:', partidas);
+    
+    // Garantir que cada partida tenha apenas seus próprios eventos
+    const partidasLimpas = partidas.map(partida => ({
+      ...partida,
+      eventos: (partida.eventos || []).filter(evento => evento.partidaId === partida.id)
+    }));
+
+    console.log('EditPartidasTab - Partidas limpas para salvar:', partidasLimpas);
+
     const peladaAtualizada = {
       ...pelada,
-      partidas
+      partidas: partidasLimpas
     };
 
     onSave(peladaAtualizada);
