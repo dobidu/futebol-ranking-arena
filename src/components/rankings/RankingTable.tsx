@@ -1,9 +1,10 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { RankingJogador, Temporada } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Target, Users, Calendar, Award, Clock, AlertTriangle } from 'lucide-react';
+import { Trophy, Target, Users, Calendar, Award, Clock, AlertTriangle, User } from 'lucide-react';
 
 interface RankingTableProps {
   data: RankingJogador[];
@@ -173,7 +174,15 @@ const RankingTable: React.FC<RankingTableProps> = ({ data, type, temporada }) =>
                 
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    <div className="font-semibold text-foreground">{item.jogador.nome}</div>
+                    <Link 
+                      to={`/jogador/${item.jogador.id}`}
+                      className="flex items-center gap-2 hover:text-primary transition-colors group"
+                    >
+                      <User className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                      <div className="font-semibold text-foreground group-hover:text-primary underline-offset-4 group-hover:underline">
+                        {item.jogador.nome}
+                      </div>
+                    </Link>
                   </div>
                 </TableCell>
                 

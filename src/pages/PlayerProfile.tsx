@@ -136,7 +136,7 @@ const PlayerProfile: React.FC = () => {
     };
   });
 
-  // Estatísticas gerais melhoradas
+  // Estatísticas gerais melhoradas com correção na taxa de vitória
   const estatisticasGerais = {
     totalPontos: estatisticasJogador?.pontuacaoTotal || 0,
     totalPresencas: estatisticasJogador?.presencas || 0,
@@ -148,7 +148,32 @@ const PlayerProfile: React.FC = () => {
     temporadasParticipadas: historicoTemporadas.length,
     mediaPontosPorPelada: estatisticasJogador?.presencas > 0 ? (estatisticasJogador.pontuacaoTotal / estatisticasJogador.presencas) : 0,
     mediaGolsPorPelada: estatisticasJogador?.presencas > 0 ? (estatisticasJogador.gols / estatisticasJogador.presencas) : 0,
-    percentualVitorias: estatisticasJogador?.presencas > 0 ? (estatisticasJogador.vitorias / estatisticasJogador.presencas * 100) : 0
+    // Corrigindo o cálculo da taxa de vitória - deve ser baseado nas partidas jogadas, não nas presenças
+    percentualVitorias: (() => {
+      let totalPartidas = 0;
+      let vitoriasCount = 0;
+      
+      peladasDoJogador.forEach(pelada => {
+        const temporada = temporadas.find(t => t.id === pelada.temporadaId);
+        
+        pelada.partidas?.forEach(partida => {
+          const jogadorNoTimeA = partida.timeA?.includes(jogador.id);
+          const jogadorNoTimeB = partida.timeB?.includes(jogador.id);
+          
+          if (jogadorNoTimeA || jogadorNoTimeB) {
+            totalPartidas++;
+            
+            if (partida.golsTimeA > partida.golsTimeB && jogadorNoTimeA) {
+              vitoriasCount++;
+            } else if (partida.golsTimeB > partida.golsTimeA && jogadorNoTimeB) {
+              vitoriasCount++;
+            }
+          }
+        });
+      });
+      
+      return totalPartidas > 0 ? (vitoriasCount / totalPartidas * 100) : 0;
+    })()
   };
 
   return (
@@ -161,7 +186,7 @@ const PlayerProfile: React.FC = () => {
         totalAssistencias={estatisticasGerais.totalAssistencias}
         totalPresencas={estatisticasGerais.totalPresencas}
         percentualVitorias={estatisticasGerais.percentualVitorias}
-        totalVitorias={estatisticasGerais.totalVitorias}
+        totalVitorias={estatisticasJogador?.vitorias || 0}
         mediaPontosPorPelada={estatisticasGerais.mediaPontosPorPelada}
         mediaGolsPorPelada={estatisticasGerais.mediaGolsPorPelada}
       />
