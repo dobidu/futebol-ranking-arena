@@ -78,13 +78,13 @@ const Index: React.FC = () => {
 
   // Preparar dados das estatísticas especiais
   const statsPeladaMaisGols = peladaComMaisGols ? {
-    nome: peladaComMaisGols.nome || `Pelada ${new Date(peladaComMaisGols.data).toLocaleDateString('pt-BR')}`,
+    nome: `Pelada ${new Date(peladaComMaisGols.data).toLocaleDateString('pt-BR')}`,
     gols: peladaComMaisGols.partidas?.reduce((total, partida) => total + (partida.placarA || 0) + (partida.placarB || 0), 0) || 0,
     data: new Date(peladaComMaisGols.data).toLocaleDateString('pt-BR')
   } : undefined;
 
   const statsPeladaMaisCartoes = peladaComMaisCartoes ? {
-    nome: peladaComMaisCartoes.nome || `Pelada ${new Date(peladaComMaisCartoes.data).toLocaleDateString('pt-BR')}`,
+    nome: `Pelada ${new Date(peladaComMaisCartoes.data).toLocaleDateString('pt-BR')}`,
     cartoes: peladaComMaisCartoes.partidas?.reduce((total, partida) => {
       return total + (partida.eventos?.filter(e => 
         e.tipo === 'cartao_amarelo' || e.tipo === 'cartao_azul' || e.tipo === 'cartao_vermelho'
